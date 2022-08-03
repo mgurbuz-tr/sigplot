@@ -150,7 +150,10 @@
             });
         }
 
-        pluginInit() {
+        pluginInit(isListen) {
+            if (!isListen) {
+                return;
+            }
             this.addListener("mmove", (evt) => {
                 this._onMouseMove(evt);
             });
