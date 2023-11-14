@@ -1654,6 +1654,13 @@
          *            settings.p_cuts true displays p_cuts on a 2D plot
          */
         change_settings: function(settings) {
+            if(settings.xlabel){
+                this._Gx.xlabel = settings.xlabel;
+            }
+            if(settings.ylabel){
+                this._Gx.ylabel = settings.ylabel;
+            }
+         
             var Gx = this._Gx;
             var Mx = this._Mx;
 
@@ -6315,11 +6322,12 @@
      * @private
      */
     function sigplot_legend_menu(plot, index) {
+		return;
         var Gx = plot._Gx;
         var Mx = plot._Mx;
 
         mx.removeEventListener(Mx, "mousedown", plot.onmousedown, false);
-
+	
         var DASHED = {
             text: "Dashed...",
             handler: function() {

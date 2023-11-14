@@ -230,8 +230,11 @@
         },
 
         clear_annotations: function() {
+            this.annotations.length=0;
             this.annotations = [];
-
+            this.plot.removeListener("mmove", this.onmousemove);
+            this.plot.removeListener("mdown", this.onmousedown);
+            document.removeEventListener("mouseup", this.onmouseup);
             this.plot.redraw();
         },
 

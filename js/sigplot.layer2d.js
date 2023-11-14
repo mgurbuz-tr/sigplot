@@ -346,11 +346,11 @@
                     this.position = (this.position + 1) % this.lps;
                 }
 
-                if (Mx.level === 0) {
+                if (Mx.level === 0 || this.drawmode === "falling") {
                     Gx.panymin = this.ymin;
                     Gx.panymax = this.ymax;
-                    Mx.stk[0].ymin = this.ymin;
-                    Mx.stk[0].ymax = this.ymax;
+                    Mx.stk[Mx.level].ymin = this.ymin;
+                    Mx.stk[Mx.level].ymax = this.ymax;
                 }
             }
         },

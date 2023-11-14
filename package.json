@@ -1,7 +1,7 @@
 {
   "name": "bazlambacforever",
   "description": "Yozgatın gururu!",
-  "version": "2.0.1-rc19",
+  "version": "2.0.3-rc23",
   "main": "js/sigplot.js",
   "files": [
     "js",

@@ -39,14 +39,14 @@
 /* global require */
 /* global requestAnimFrame */
 /* global cancelAnimFrame */
-class waterfallData{
-    constructor(data){
-         this.data = data;
+class waterfallData {
+    constructor(data) {
+        this.data = data;
     }
 }
-window.current_specturum_time='00:00:00';
+window.current_specturum_time = '00:00:00';
 
-(function() {
+(function () {
     var anc = {};
     var ancstatus = false;
     var tinycolor = require("tinycolor2");
@@ -55,7 +55,7 @@ window.current_specturum_time='00:00:00';
     var CanvasInput = require("./CanvasInput");
     var m = require("./m");
 
-    function mx() {}
+    function mx() { }
 
     mx.DomMenu = require("./mx.dommenu");
     mx.XW_INIT = -3;
@@ -110,7 +110,7 @@ window.current_specturum_time='00:00:00';
      * The zoom stack structure object
      * @private
      */
-    mx.STKSTRUCT = function() {
+    mx.STKSTRUCT = function () {
         this.xmin = 0.0; // real world val at x1(origin=1,4) or x2(origin=2,4)
         this.xmax = 0.0; // real world val at x2(origin=1,4) or x1(origin=2,4)
         this.ymin = 0.0; // real world val at y2(origin=1,2) or y1(origin=3,4)
@@ -127,7 +127,7 @@ window.current_specturum_time='00:00:00';
      * The scrollbar structure object used to hold state about scrolling
      * @private
      */
-    mx.SCROLLBAR = function() {
+    mx.SCROLLBAR = function () {
         this.flag = null; // int_4 // flag field for MX$SCROLLBAR routine
         this.action = null; // int_4 // returned action performed (XW_EVENT)
         this.smin = null;
@@ -185,10 +185,10 @@ window.current_specturum_time='00:00:00';
     function MX(element) { // this is where the canvases are setup/defined
         this.root = element;
         ancstatus = true;
-        for(var prop in anc){
-			delete anc[prop]
-		};
-    
+        for (var prop in anc) {
+            delete anc[prop]
+        };
+
 
         // Create a div to hold all the various canvas layers
         this.parent = document.createElement('div');
@@ -309,18 +309,18 @@ window.current_specturum_time='00:00:00';
      * @param {element}	element 	Reference to a DOM window element
      */
     /* Step #5*/
-    mx.open = function(element) {
+    mx.open = function (element) {
         var Mx = new MX(element); /* Step #6*/
 
-        Mx.wid_canvas.oncontextmenu = function(event) {
+        Mx.wid_canvas.oncontextmenu = function (event) {
             event.preventDefault();
             return false;
         };
 
         this._ctx = Mx.active_canvas.getContext("2d");
 
-        Mx.onmousemove = (function(Mx) {
-            return function(e) {
+        Mx.onmousemove = (function (Mx) {
+            return function (e) {
                 var rect = e.target.getBoundingClientRect();
                 // Screen x/y of mouse
                 Mx.x = e.x || e.clientX;
@@ -345,10 +345,10 @@ window.current_specturum_time='00:00:00';
             };
         })(Mx);
 
-        Mx.onmouseup = (function(Mx) {
-            return function(event) {
+        Mx.onmouseup = (function (Mx) {
+            return function (event) {
                 if (Mx.warpbox) {
-                    mx.onWidgetLayer(Mx, function() {
+                    mx.onWidgetLayer(Mx, function () {
                         mx.erase_window(Mx);
                     });
 
@@ -380,22 +380,22 @@ window.current_specturum_time='00:00:00';
             };
         })(Mx);
 
-        Mx.onmousedown = (function(Mx) {
-            return function(event) {
+        Mx.onmousedown = (function (Mx) {
+            return function (event) {
                 event.preventDefault();
                 mx.widget_callback(Mx, event);
                 return false;
             };
         })(Mx);
 
-        Mx.onkeydown = (function(Mx) {
-            return function(event) {
+        Mx.onkeydown = (function (Mx) {
+            return function (event) {
                 if (Mx.warpbox) {
                     var keyCode = common.getKeyCode(event);
                     if (((keyCode === 17) || // Ctrl
-                            (keyCode === 224) || // Mac Command Firefox
-                            (keyCode === 91) || // Safari/Chrome Left-command
-                            (keyCode === 93)) && // Safari/Chrome Right-command
+                        (keyCode === 224) || // Mac Command Firefox
+                        (keyCode === 91) || // Safari/Chrome Left-command
+                        (keyCode === 93)) && // Safari/Chrome Right-command
                         (Mx.warpbox.style !== Mx.warpbox.alt_style)) {
                         Mx.warpbox.style = Mx.warpbox.alt_style;
                         mx.redraw_warpbox(Mx);
@@ -406,14 +406,14 @@ window.current_specturum_time='00:00:00';
             };
         })(Mx);
 
-        Mx.onkeyup = (function(Mx) {
-            return function(event) {
+        Mx.onkeyup = (function (Mx) {
+            return function (event) {
                 if (Mx.warpbox) {
                     var keyCode = common.getKeyCode(event);
                     if (((keyCode === 17) || // Ctrl
-                            (keyCode === 224) || // Mac Command Firefox
-                            (keyCode === 91) || // Safari/Chrome Left-command
-                            (keyCode === 93)) && // Safari/Chrome Right-command
+                        (keyCode === 224) || // Mac Command Firefox
+                        (keyCode === 91) || // Safari/Chrome Left-command
+                        (keyCode === 93)) && // Safari/Chrome Right-command
                         (Mx.warpbox.style !== Mx.warpbox.def_style)) {
                         Mx.warpbox.style = Mx.warpbox.def_style;
                         mx.redraw_warpbox(Mx);
@@ -422,16 +422,16 @@ window.current_specturum_time='00:00:00';
             };
         })(Mx);
 
-        Mx.ontouchend = (function(Mx) {
-            return function(event) {
+        Mx.ontouchend = (function (Mx) {
+            return function (event) {
                 Mx.onmouseup({
                     which: 1
                 });
             };
         })(Mx);
 
-        Mx.ontouchmove = (function(Mx) {
-            return function(event) {
+        Mx.ontouchmove = (function (Mx) {
+            return function (event) {
                 // Compute the total offset - consider caching offset and only calculating on resize
                 var element = Mx.canvas;
                 var offsetX = 0;
@@ -458,7 +458,7 @@ window.current_specturum_time='00:00:00';
      * @param Mx
      * @private
      */
-    mx.enableListeners = function(Mx) {
+    mx.enableListeners = function (Mx) {
         mx.addEventListener(Mx, "mousemove", Mx.onmousemove, false);
         window.addEventListener("mouseup", Mx.onmouseup, false);
         mx.addEventListener(Mx, "mousedown", Mx.onmousedown, false);
@@ -473,7 +473,7 @@ window.current_specturum_time='00:00:00';
      * @param Mx
      * @private
      */
-    mx.disableListeners = function(Mx) {
+    mx.disableListeners = function (Mx) {
         mx.removeEventListener(Mx, "mousemove", Mx.onmousemove, false);
         window.removeEventListener("mouseup", Mx.onmouseup, false);
         mx.removeEventListener(Mx, "mousedown", Mx.onmousedown, false);
@@ -490,7 +490,7 @@ window.current_specturum_time='00:00:00';
      * @param useCapture
      * @private
      */
-    mx.addEventListener = function(Mx, event, callback, useCapture) {
+    mx.addEventListener = function (Mx, event, callback, useCapture) {
         return Mx.wid_canvas.addEventListener(event, callback, useCapture);
     };
 
@@ -501,7 +501,7 @@ window.current_specturum_time='00:00:00';
      * @param useCapture
      * @private
      */
-    mx.removeEventListener = function(Mx, event, callback, useCapture) {
+    mx.removeEventListener = function (Mx, event, callback, useCapture) {
         return Mx.wid_canvas.removeEventListener(event, callback, useCapture);
     };
 
@@ -510,7 +510,7 @@ window.current_specturum_time='00:00:00';
      * @param event
      * @private
      */
-    mx.dispatchEvent = function(Mx, event) {
+    mx.dispatchEvent = function (Mx, event) {
         return Mx.wid_canvas.dispatchEvent(event);
     };
 
@@ -519,7 +519,7 @@ window.current_specturum_time='00:00:00';
      * @param func
      * @private
      */
-    mx.onWidgetLayer = function(Mx, func) {
+    mx.onWidgetLayer = function (Mx, func) {
         mx.onCanvas(Mx, Mx.wid_canvas, func);
     };
 
@@ -528,7 +528,7 @@ window.current_specturum_time='00:00:00';
      * @param func
      * @private
      */
-    mx.onCanvas = function(Mx, canvas, func) {
+    mx.onCanvas = function (Mx, canvas, func) {
         var current_active = Mx.active_canvas;
         Mx.active_canvas = canvas;
         try {
@@ -545,8 +545,8 @@ window.current_specturum_time='00:00:00';
      * @param func
      * @private
      */
-    mx.withWidgetLayer = function(Mx, func) {
-        var f = function() {
+    mx.withWidgetLayer = function (Mx, func) {
+        var f = function () {
             mx.onWidgetLayer(Mx, func);
         };
         return f;
@@ -557,7 +557,7 @@ window.current_specturum_time='00:00:00';
      * @param func
      * @private
      */
-    mx.render = function(Mx, func) {
+    mx.render = function (Mx, func) {
         if (!func) {
             return;
         }
@@ -566,7 +566,7 @@ window.current_specturum_time='00:00:00';
 
         if (Mx._syncRender === false) {
             if (!active_canvas._animationFrameHandle) {
-                active_canvas._animationFrameHandle = requestAnimFrame(function() {
+                active_canvas._animationFrameHandle = requestAnimFrame(function () {
                     active_canvas._animationFrameHandle = undefined;
                     func();
                 });
@@ -581,7 +581,7 @@ window.current_specturum_time='00:00:00';
      * @param value
      * @private
      */
-    mx.fullscreen = function(Mx, value) {
+    mx.fullscreen = function (Mx, value) {
         if (value === undefined) {
             value = !Mx.fullscreen;
         }
@@ -616,7 +616,7 @@ window.current_specturum_time='00:00:00';
      * @param Mx
      * @private
      */
-    mx.checkresize = function(Mx) {
+    mx.checkresize = function (Mx) {
         var canvas = Mx.canvas;
         if ((canvas.height !== Mx.root.clientHeight) || (canvas.width !== Mx.root.clientWidth)) {
 
@@ -637,7 +637,7 @@ window.current_specturum_time='00:00:00';
      * @param Mx
      * @private
      */
-    mx.invertbgfg = function(Mx) {
+    mx.invertbgfg = function (Mx) {
         mx.setbgfg(Mx, Mx.fg, Mx.bg, !Mx.xi);
     };
 
@@ -647,7 +647,7 @@ window.current_specturum_time='00:00:00';
      * @param color3
      * @private
      */
-    mx.mixcolor = function(color1, color2, perc1to2) {
+    mx.mixcolor = function (color1, color2, perc1to2) {
         var c1 = tinycolor(color1).toRgb();
         var c2 = tinycolor(color2).toRgb();
         var mix = 1.0 - perc1to2;
@@ -666,7 +666,7 @@ window.current_specturum_time='00:00:00';
      * @param fillStyle
      * @private
      */
-    mx.linear_gradient = function(Mx, x, y, w, h, fillStyle) {
+    mx.linear_gradient = function (Mx, x, y, w, h, fillStyle) {
         var ctx = Mx.active_canvas.getContext("2d");
         var step_size = 1.0 / fillStyle.length;
         var lingrad = ctx.createLinearGradient(x, y, w, h);
@@ -687,7 +687,7 @@ window.current_specturum_time='00:00:00';
      * @param xi
      * @private
      */
-    mx.setbgfg = function(Mx, bg, fg, xi) {
+    mx.setbgfg = function (Mx, bg, fg, xi) {
         Mx.bg = tinycolor(bg).toHexString();
         Mx.fg = tinycolor(fg).toHexString();
         Mx.xi = tinycolor(xi).toHexString();
@@ -740,7 +740,7 @@ window.current_specturum_time='00:00:00';
      * @param theme
      * @private
      */
-    mx.settheme = function(Mx, theme) {
+    mx.settheme = function (Mx, theme) {
         Mx.bg = theme.bg;
         Mx.fg = theme.fg;
         Mx.xi = theme.xi;
@@ -756,7 +756,7 @@ window.current_specturum_time='00:00:00';
      * Close graphics windows.
      * @param Mx
      */
-    mx.close = function(Mx) {
+    mx.close = function (Mx) {
         var canvas = Mx.wid_canvas;
         canvas.removeEventListener("mousemove", Mx.onmousemove, false);
         //canvas.removeEventListener("touchmove", Mx.ontouchmove);
@@ -785,7 +785,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$SCROLLBAR
     //
-    mx.scrollbar = function(Mx, sb, xs, xe, ys, ye, out, qs, qe, mouseEvent, scrollbarState) {
+    mx.scrollbar = function (Mx, sb, xs, xe, ys, ye, out, qs, qe, mouseEvent, scrollbarState) {
         // Param types:
         // mx.SCROLLBAR* sb,
         // int xs, int xe, int ys, int ye,
@@ -885,7 +885,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= mx_scroll
     //
-    mx.scroll = function(Mx, sv, op, mouseEvent, scrollbarState) {
+    mx.scroll = function (Mx, sv, op, mouseEvent, scrollbarState) {
         var btn; // an int
         var smin; // a real_8
         var srange; // a real_8
@@ -924,7 +924,7 @@ window.current_specturum_time='00:00:00';
                         case 3:
                             btn = 3;
                             break;
-                            /* Add these cases for the mouse wheel */
+                        /* Add these cases for the mouse wheel */
                         case 4:
                             btn = 4;
                             break;
@@ -1021,94 +1021,94 @@ window.current_specturum_time='00:00:00';
                         case mx.SB_WHEELUP:
                         case mx.SB_WHEELDOWN:
                         case mx.SB_EXPAND:
-                            /* we don't want to repeat these */
+                        /* we don't want to repeat these */
                         case mx.SB_SHRINK:
                         case mx.SB_FULL:
                             sv.action = sv.repeat_count = 0;
                     }
                 }
-                /* FALL THROUGH!!! */
-                /* jshint -W086 */
-                case mx.XW_COMMAND:
-                    /* jshint +W086 */
+            /* FALL THROUGH!!! */
+            /* jshint -W086 */
+            case mx.XW_COMMAND:
+                /* jshint +W086 */
 
-                    smin = sv.smin;
-                    srange = sv.srange;
+                smin = sv.smin;
+                srange = sv.srange;
 
-                    switch (sv.action) {
-                        case mx.SB_STEPINC:
-                            smin += sv.step;
-                            break;
-                        case mx.SB_STEPDEC:
-                            smin -= sv.step;
-                            break;
-                        case mx.SB_PAGEINC:
-                            smin += sv.page;
-                            break;
-                        case mx.SB_PAGEDEC:
-                            smin -= sv.page;
-                            break;
-                        case mx.SB_FULL:
-                            smin = sv.tmin;
-                            srange = sv.trange;
-                            break;
-                        case mx.SB_EXPAND:
-                            srange = srange * sv.scale;
-                            if (smin <= 0 && smin + sv.srange >= 0) {
-                                smin *= sv.scale;
-                            } else {
-                                smin -= (srange - sv.srange) / 2.0;
-                            }
-                            break;
-                        case mx.SB_SHRINK:
-                            srange = srange / sv.scale;
-                            if (smin < 0 && smin + sv.srange >= 0) {
-                                smin += srange / sv.scale; /* Plot crosses axis */
-                            } else if (smin === 0 && smin + sv.srange >= 0) {
-                                smin = srange / sv.scale; /* Plot touches axis */
-                            } else {
-                                smin += (sv.srange - srange) / 2.0; /* Plot is completely contained on positive side of axis */
-                            }
-                            break;
-                            /* The mouse wheel needs to scroll 1 page at a time, if you want an
-		           application to scroll differently, change sv.page with
-		           mx_scroll_vals in the application code */
-                        case mx.SB_WHEELUP:
-                            smin -= sv.page;
-                            break;
-                        case mx.SB_WHEELDOWN:
-                            smin += sv.page;
-                            break;
-                    }
-
-                    if (sv.trange > 0) {
-                        smin = Math.max(sv.tmin, Math.min(smin, sv.tmin + sv.trange - srange));
-                        srange = Math.min(srange, sv.trange);
-                    } else {
-                        smin = Math.min(sv.tmin, Math.max(smin, sv.tmin + sv.trange - srange));
-                        srange = Math.max(srange, sv.trange);
-                    }
-
-                    if (sv.smin === smin && sv.srange === srange) {
-                        if (sv.action !== mx.SB_DRAG) {
-                            sv.action = sv.repeat_count = 0;
+                switch (sv.action) {
+                    case mx.SB_STEPINC:
+                        smin += sv.step;
+                        break;
+                    case mx.SB_STEPDEC:
+                        smin -= sv.step;
+                        break;
+                    case mx.SB_PAGEINC:
+                        smin += sv.page;
+                        break;
+                    case mx.SB_PAGEDEC:
+                        smin -= sv.page;
+                        break;
+                    case mx.SB_FULL:
+                        smin = sv.tmin;
+                        srange = sv.trange;
+                        break;
+                    case mx.SB_EXPAND:
+                        srange = srange * sv.scale;
+                        if (smin <= 0 && smin + sv.srange >= 0) {
+                            smin *= sv.scale;
+                        } else {
+                            smin -= (srange - sv.srange) / 2.0;
                         }
-                    } else {
-                        // UPDATE SCROLLBAR STATE as well
-                        sv.smin = scrollbarState.smin = smin;
-                        sv.srange = scrollbarState.srange = srange;
-                        sv.repeat_count++;
-                    }
+                        break;
+                    case mx.SB_SHRINK:
+                        srange = srange / sv.scale;
+                        if (smin < 0 && smin + sv.srange >= 0) {
+                            smin += srange / sv.scale; /* Plot crosses axis */
+                        } else if (smin === 0 && smin + sv.srange >= 0) {
+                            smin = srange / sv.scale; /* Plot touches axis */
+                        } else {
+                            smin += (sv.srange - srange) / 2.0; /* Plot is completely contained on positive side of axis */
+                        }
+                        break;
+                    /* The mouse wheel needs to scroll 1 page at a time, if you want an
+           application to scroll differently, change sv.page with
+           mx_scroll_vals in the application code */
+                    case mx.SB_WHEELUP:
+                        smin -= sv.page;
+                        break;
+                    case mx.SB_WHEELDOWN:
+                        smin += sv.page;
+                        break;
+                }
 
-                    if (op === mx.XW_COMMAND) {
-                        mx.scroll(Mx, sv, mx.XW_UPDATE, undefined);
-                        sv.action = 0;
-                    }
+                if (sv.trange > 0) {
+                    smin = Math.max(sv.tmin, Math.min(smin, sv.tmin + sv.trange - srange));
+                    srange = Math.min(srange, sv.trange);
+                } else {
+                    smin = Math.min(sv.tmin, Math.max(smin, sv.tmin + sv.trange - srange));
+                    srange = Math.max(srange, sv.trange);
+                }
 
-                    break;
-                case mx.XW_DRAW:
-                case mx.XW_UPDATE:
-                    mx.redrawScrollbar(sv, Mx, op);
+                if (sv.smin === smin && sv.srange === srange) {
+                    if (sv.action !== mx.SB_DRAG) {
+                        sv.action = sv.repeat_count = 0;
+                    }
+                } else {
+                    // UPDATE SCROLLBAR STATE as well
+                    sv.smin = scrollbarState.smin = smin;
+                    sv.srange = scrollbarState.srange = srange;
+                    sv.repeat_count++;
+                }
+
+                if (op === mx.XW_COMMAND) {
+                    mx.scroll(Mx, sv, mx.XW_UPDATE, undefined);
+                    sv.action = 0;
+                }
+
+                break;
+            case mx.XW_DRAW:
+            case mx.XW_UPDATE:
+                mx.redrawScrollbar(sv, Mx, op);
 
         } /* switch */
         return true;
@@ -1127,7 +1127,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= mx_scroll_loc
     //
-    mx.scroll_loc = function(sv, x, y, w, h, origin, scrollbarState) {
+    mx.scroll_loc = function (sv, x, y, w, h, origin, scrollbarState) {
         // UPDATE local scrollbar and SCROLLBAR STATE
         if (sv === undefined) {
             return; /* mx.SCROLLBAR */
@@ -1169,7 +1169,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= mx_scroll_vals
     //
-    mx.scroll_vals = function(sv, smin, srange, tmin, trange, step, page, scale, scrollbarState) {
+    mx.scroll_vals = function (sv, smin, srange, tmin, trange, step, page, scale, scrollbarState) {
         // UPDATE SCROLLBAR STATE as well
         if (sv === undefined) {
             return; /* an mx.SCROLLBAR */
@@ -1195,7 +1195,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$DRAW_SYMBOL
     //
-    mx.draw_symbol = function(Mx, ic, x, y, symbol, rr, n) {
+    mx.draw_symbol = function (Mx, ic, x, y, symbol, rr, n) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         var r = 0; // int
@@ -1251,7 +1251,7 @@ window.current_specturum_time='00:00:00';
                     break;
                 case mx.L_ITriangleSymbol:
                     r = -r; // TODO Refactor without switch fall-through?
-                    /* jshint -W086 */
+                /* jshint -W086 */
                 case mx.L_TriangleSymbol:
                     /* jshint +W086 */
                     d = m.trunc(r * 1.5);
@@ -1340,7 +1340,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$DRAW_SYMBOLS
     //
-    mx.draw_symbols = function(Mx, ic, pixx, pixy, npix, symbol, rr, istart) {
+    mx.draw_symbols = function (Mx, ic, pixx, pixy, npix, symbol, rr, istart) {
         for (var i = 0; i < npix; i++) {
             mx.draw_symbol(Mx, ic, pixx[i], pixy[i], symbol, rr, i + istart);
         }
@@ -1410,10 +1410,18 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$TRACE
     //
-    mx.trace = function(Mx, color, xpoint, ypoint, npts, istart, skip, line, symb, rad, options) {
+    mx.trace = function (Mx, color, xpoint, ypoint, npts, istart, skip, line, symb, rad, options, isAt) {
+
         if ((xpoint === undefined) || (ypoint === undefined)) {
             throw "mx.trace requires xpoint and ypoint";
         }
+
+        if (isAt) {
+            for (let index = 0; index < ypoint.length; index++) {
+                ypoint[index] = ypoint[index] + window.mouseOffset;
+            }
+        }
+
 
         if (skip === undefined) {
             skip = 1;
@@ -1603,7 +1611,7 @@ window.current_specturum_time='00:00:00';
                     color: color
                 });
 
-                colors.sort(function(a, b) {
+                colors.sort(function (a, b) {
                     return a.start - b.start;
                 });
 
@@ -1808,7 +1816,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$DRAW_MODE
     //
-    mx.draw_mode = function(Mx, linewidth, style) {
+    mx.draw_mode = function (Mx, linewidth, style) {
         Mx.linewidth = (linewidth === undefined) ? 1 : linewidth;
         Mx.style = style;
     };
@@ -1826,7 +1834,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$DRAW_LINES
     //
-    mx.draw_line = function(Mx, color, x1, y1, x2, y2, linewidth, style) {
+    mx.draw_line = function (Mx, color, x1, y1, x2, y2, linewidth, style) {
         var ctx = Mx.active_canvas.getContext("2d");
         if (linewidth === undefined) {
             linewidth = Mx.linewidth;
@@ -1864,7 +1872,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$RUBBERLINE
     //
-    mx.rubberline = function(Mx, x1, y1, x2, y2) {
+    mx.rubberline = function (Mx, x1, y1, x2, y2) {
         var ctx = Mx.active_canvas.getContext("2d");
         draw_line(ctx, x1, y1, x2, y2, {
             mode: "xor"
@@ -1879,7 +1887,7 @@ window.current_specturum_time='00:00:00';
      * @param npts
      * @private
      */
-    mx.fill_trace = function(Mx, fillStyle, pixx, pixy, npts, l, r) {
+    mx.fill_trace = function (Mx, fillStyle, pixx, pixy, npts, l, r) {
         var ctx = Mx.active_canvas.getContext("2d");
         if (Array.isArray(fillStyle)) {
             ctx.fillStyle = mx.linear_gradient(Mx, 0, 0, 0, Mx.b - Mx.t, fillStyle);
@@ -1946,7 +1954,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$DRAW_LINES
     //
-    mx.draw_lines = function(Mx, colors, pixx, pixy, npts, linewidth, style) {
+    mx.draw_lines = function (Mx, colors, pixx, pixy, npts, linewidth, style) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         if (npts < 1) {
@@ -2052,7 +2060,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$CLIP
     //
-    mx.clip = function(Mx, left, top, width, height) {
+    mx.clip = function (Mx, left, top, width, height) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         if ((left === 0) && (top === 0) && (width === 0) && (height === 0)) {
@@ -2071,7 +2079,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$CLEAR_WINDOW
     //
-    mx.clear_window = function(Mx) {
+    mx.clear_window = function (Mx) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         ctx.fillStyle = Mx.bg;
@@ -2082,7 +2090,7 @@ window.current_specturum_time='00:00:00';
      * @param Mx
      * @private
      */
-    mx.erase_window = function(Mx) {
+    mx.erase_window = function (Mx) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         ctx.clearRect(0, 0, Mx.width, Mx.height);
@@ -2101,7 +2109,7 @@ window.current_specturum_time='00:00:00';
     //
     // When CTRL is pressed, alt_style is used
     //
-    mx.rubberbox = function(Mx, func, mode, def_style, alt_style) {
+    mx.rubberbox = function (Mx, func, mode, def_style, alt_style) {
         mx.warpbox(Mx, Mx.xpos, Mx.ypos, Mx.xpos, Mx.ypos, 0, Mx.width, 0, Mx.height, func, mode, def_style, alt_style);
     };
 
@@ -2124,7 +2132,7 @@ window.current_specturum_time='00:00:00';
     // ~= MX$WARPBOX
     // Unlike MX$WARPBOX, this is a non-blocking call.   As such the 'func' is a callback for then the rubberbox is finished.
     //
-    mx.warpbox = function(Mx, xo, yo, xl, yl, xmin, xmax, ymin, ymax, func, mode, def_style, alt_style) {
+    mx.warpbox = function (Mx, xo, yo, xl, yl, xmin, xmax, ymin, ymax, func, mode, def_style, alt_style) {
         if (!def_style) {
             def_style = {};
         }
@@ -2154,7 +2162,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= M$ORIGIN
     //
-    mx.origin = function(inorigin, outorigin, instk) {
+    mx.origin = function (inorigin, outorigin, instk) {
         inorigin = Math.max(1, inorigin);
         outorigin = Math.max(1, outorigin);
 
@@ -2195,7 +2203,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$MULT
     //
-    mx.mult = function(end1, end2) {
+    mx.mult = function (end1, end2) {
         var absmax = Math.max(Math.abs(end1), Math.abs(end2));
         if (absmax === 0) {
             return 1.0;
@@ -2219,7 +2227,7 @@ window.current_specturum_time='00:00:00';
      */
     //
     // event may be undefined or null
-    mx.widget_callback = function(Mx, event) {
+    mx.widget_callback = function (Mx, event) {
         if (Mx.prompt) {
             if (event.which === 3) {
                 Mx.prompt.input.onsubmit();
@@ -2249,7 +2257,7 @@ window.current_specturum_time='00:00:00';
      */
     //
     // ~= MX$DPROMPT - only higher-level
-    mx.prompt = function(Mx, promptText, isValid, onSuccess, refresh, inputValue, xpos, ypos, errorTimeout) {
+    mx.prompt = function (Mx, promptText, isValid, onSuccess, refresh, inputValue, xpos, ypos, errorTimeout) {
         if (inputValue !== undefined) {
             var inputValid = isValid(inputValue);
 
@@ -2259,7 +2267,7 @@ window.current_specturum_time='00:00:00';
         }
 
         // TODO Validation - make sure promptText is not too long and isn't multi-line...
-        mx.onWidgetLayer(Mx, function() {
+        mx.onWidgetLayer(Mx, function () {
             var ctx = Mx.active_canvas.getContext("2d");
             var maxNumChars = 30;
 
@@ -2270,10 +2278,10 @@ window.current_specturum_time='00:00:00';
             var fontFamily = ctx.font.substr(fontIndex, ctx.font.length).toString();
 
             /* TODO Note: There is a scrolling bug - you can scroll to the right, but not the left of the value
-			And... when truncating the width of an input field - it shows the value as though truncated
-			from the right (say if its cut off by 1 and that one happened to be a negative sign, the value
-			would look like a positive) .
-			 */
+            And... when truncating the width of an input field - it shows the value as though truncated
+            from the right (say if its cut off by 1 and that one happened to be a negative sign, the value
+            would look like a positive) .
+             */
             var canvasInput = new CanvasInput({
                 height: Mx.text_h,
                 fontFamily: fontFamily,
@@ -2294,8 +2302,8 @@ window.current_specturum_time='00:00:00';
                 tabToClear: true
             });
 
-            var subHandlerCreator = function(messageX, messageY) {
-                return function() {
+            var subHandlerCreator = function (messageX, messageY) {
+                return function () {
                     var newValue = this.value();
 
                     var inputValid = isValid(newValue);
@@ -2304,8 +2312,8 @@ window.current_specturum_time='00:00:00';
                         mx.message(Mx, "Value: '" + newValue + "' isn't valid due to '" + inputValid.reason + "' - RETRY", undefined, messageX, messageY);
 
                         // Clear error message
-                        setTimeout(function() {
-                            mx.onWidgetLayer(Mx, function() {
+                        setTimeout(function () {
+                            mx.onWidgetLayer(Mx, function () {
                                 mx.erase_window(Mx);
                             });
                             Mx.widget = null;
@@ -2316,7 +2324,7 @@ window.current_specturum_time='00:00:00';
 
                         // Kill CanvasInput
                         this.cleanup();
-                        mx.onWidgetLayer(Mx, function() {
+                        mx.onWidgetLayer(Mx, function () {
                             mx.erase_window(Mx);
                         });
 
@@ -2326,9 +2334,9 @@ window.current_specturum_time='00:00:00';
             };
 
             // Create redraw method
-            var redrawPromptCreator = function(Mx, input, promptText) {
-                return function(xpos, ypos) {
-                    mx.onWidgetLayer(Mx, function() {
+            var redrawPromptCreator = function (Mx, input, promptText) {
+                return function (xpos, ypos) {
+                    mx.onWidgetLayer(Mx, function () {
                         var GBorder = 3;
 
                         // Calculate the position variables
@@ -2394,7 +2402,7 @@ window.current_specturum_time='00:00:00';
      * @param strict If strict is set to true - does not consider empty strings as valid floating point numbers.
      * @private
      */
-    mx.floatValidator = function(value, strict) {
+    mx.floatValidator = function (value, strict) {
         if (!(((strict === undefined || strict === false) && value === "")) &&
             isNaN(parseFloat(value)) || !isFinite(value)) {
             return {
@@ -2416,7 +2424,7 @@ window.current_specturum_time='00:00:00';
      * @param strict If strict is set to true - does not consider empty strings as valid integers.
      * @private
      */
-    mx.intValidator = function(value, strict) {
+    mx.intValidator = function (value, strict) {
         if (((strict === undefined || strict === false) && value === "") ||
             ((parseFloat(value) === parseInt(value, 10)) && !isNaN(value))) {
             return {
@@ -2431,7 +2439,7 @@ window.current_specturum_time='00:00:00';
         }
     };
 
-    mx.hexValidator = function(value, strict) {
+    mx.hexValidator = function (value, strict) {
         var regColorcode = /^(#)?([0-9a-fA-F]{3})([0-9a-fA-F]{3})?$/;
         if (((strict === undefined || strict === false) && value === "") ||
             (regColorcode.test(value) !== false)) {
@@ -2457,17 +2465,17 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$MESSAGE
     //
-    mx.message = function(Mx, msg, time, xpos, ypos, type) {
-        mx.onWidgetLayer(Mx, function() {
+    mx.message = function (Mx, msg, time, xpos, ypos, type) {
+        mx.onWidgetLayer(Mx, function () {
 
             mx.render_message_box(Mx, msg, xpos, ypos);
 
             Mx.widget = {
                 type: type || "ONESHOT",
-                callback: function(event) {
+                callback: function (event) {
                     if ((event.type === "mousedown") || (event.type === "keydown")) {
                         Mx.widget = null;
-                        mx.onWidgetLayer(Mx, function() {
+                        mx.onWidgetLayer(Mx, function () {
                             mx.erase_window(Mx);
                         });
                     }
@@ -2476,7 +2484,7 @@ window.current_specturum_time='00:00:00';
         });
     };
 
-    mx.render_message_box = function(Mx, msg, xpos, ypos, textColor) {
+    mx.render_message_box = function (Mx, msg, xpos, ypos, textColor) {
         var GBorder = 3;
 
         // Unlike MX$MESSAGE, this implementaion if the message
@@ -2603,7 +2611,7 @@ window.current_specturum_time='00:00:00';
      * @param fill_color
      * @param {Number} radius The corner radius. Defaults to 5;
      */
-    mx.draw_round_box = function(Mx, color, x, y, w, h, fill_opacity, fill_color, radius) {
+    mx.draw_round_box = function (Mx, color, x, y, w, h, fill_opacity, fill_color, radius) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         if (!radius) {
@@ -2652,7 +2660,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$DRAW_BOX
     //
-    mx.draw_box = function(Mx, color, x, y, w, h, fill_opacity, fill_color) {
+    mx.draw_box = function (Mx, color, x, y, w, h, fill_opacity, fill_color) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         if (color !== "xor") {
@@ -2737,7 +2745,7 @@ window.current_specturum_time='00:00:00';
      * @param width
      */
     // ~= MX$SETFONT
-    mx.set_font = function(Mx, width) {
+    mx.set_font = function (Mx, width) {
         var ctx = Mx.canvas.getContext("2d");
         var ctx_wid = Mx.wid_canvas.getContext("2d");
 
@@ -2773,7 +2781,7 @@ window.current_specturum_time='00:00:00';
      * @param style
      */
     // ~= MX$FTEXTLINE
-    mx.textline = function(Mx, xstart, ystart, xend, yend, style) {
+    mx.textline = function (Mx, xstart, ystart, xend, yend, style) {
         var ctx = Mx.active_canvas.getContext("2d");
         if (!style) {
             style = {};
@@ -2793,7 +2801,7 @@ window.current_specturum_time='00:00:00';
      * @param ndiv
      */
     // ~= MX$TICS
-    mx.tics = function(dmin, dmax, ndiv, timecode) {
+    mx.tics = function (dmin, dmax, ndiv, timecode) {
         var dtic = 1;
         var dtic1 = dmin;
 
@@ -2905,7 +2913,7 @@ window.current_specturum_time='00:00:00';
      * @param flags
      */
     // ~= MX$FDRAWAXIS
-    mx.drawaxis = function(Gx, Mx, xdiv, ydiv, xlab, ylab, flags) {
+    mx.drawaxis = function (Gx, Mx, xdiv, ydiv, xlab, ylab, flags) {
         ydiv = Gx.ydiv;
         var stk1 = mx.origin(Mx.origin, 1, Mx.stk[Mx.level]);
         var iscl = 0;
@@ -3203,11 +3211,11 @@ window.current_specturum_time='00:00:00';
             ytic = stk1.ymax - ytic1 + 1.0;
         }
         if (stk1.ymax >= stk1.ymin) {
-            endtic = function(val) {
+            endtic = function (val) {
                 return (val <= stk1.ymax);
             };
         } else {
-            endtic = function(val) {
+            endtic = function (val) {
                 return (val >= stk1.ymax);
             };
         }
@@ -3237,23 +3245,23 @@ window.current_specturum_time='00:00:00';
                     ((i < isct + Mx.text_h) || (i > iscb - Mx.text_h * 2))) {
                     // out of range for inside labels
                 } else if (flags.ytimecode) {
-                    if(ancstatus){
+                    if (ancstatus) {
                         ancstatus = false;
                         break;
                     }
-                    if((y < 0 || yTIC.dtic1 === 0)){
+                    if ((y < 0 || yTIC.dtic1 === 0)) {
                         continue;
                     }
 
-                    var count = ( y / yTIC.dtic);
-                    if(anc[count] === undefined){
-                         var keys = Object.keys(anc);
-                        if(keys.length === ydiv){
+                    var count = (y / yTIC.dtic);
+                    if (anc[count] === undefined) {
+                        var keys = Object.keys(anc);
+                        if (keys.length === ydiv) {
                             delete anc[keys[0]]
                         }
-                            var data = window.current_specturum_time;
-                            var wData = new waterfallData(data);
-                            anc[count] = (wData);
+                        var data = window.current_specturum_time;
+                        var wData = new waterfallData(data);
+                        anc[count] = (wData);
                     }
 
 
@@ -3306,7 +3314,7 @@ window.current_specturum_time='00:00:00';
      * @param rect_height
      * @private
      */
-    mx.inrect = function(x, y, rect_x, rect_y, rect_width, rect_height) {
+    mx.inrect = function (x, y, rect_x, rect_y, rect_width, rect_height) {
         return (x >= rect_x && x <= rect_x + rect_width &&
             y >= rect_y && y <= rect_y + rect_height);
     };
@@ -3346,7 +3354,7 @@ window.current_specturum_time='00:00:00';
         }
 
 
-        menu.animationFrameHandle = requestAnimFrame(mx.withWidgetLayer(Mx, function() {
+        menu.animationFrameHandle = requestAnimFrame(mx.withWidgetLayer(Mx, function () {
             mx.erase_window(Mx);
 
             menu.animationFrameHandle = undefined;
@@ -3483,7 +3491,7 @@ window.current_specturum_time='00:00:00';
      * @private
      */
     function _menu_takeaction(Mx, menu) {
-        mx.onWidgetLayer(Mx, function() {
+        mx.onWidgetLayer(Mx, function () {
             mx.erase_window(Mx);
         });
         Mx.menu = undefined;
@@ -3517,7 +3525,7 @@ window.current_specturum_time='00:00:00';
      * @private
      */
     function _menu_dismiss(Mx, menu) {
-        mx.onWidgetLayer(Mx, function() {
+        mx.onWidgetLayer(Mx, function () {
             mx.erase_window(Mx);
         });
         if (Mx.useDomMenu) {
@@ -3690,7 +3698,7 @@ window.current_specturum_time='00:00:00';
      * @param menu
      * @private
      */
-    mx.menu = function(Mx, menu) {
+    mx.menu = function (Mx, menu) {
         if (Mx.useDomMenu) {
             new mx.DomMenu(Mx, menu);
             return;
@@ -3753,7 +3761,7 @@ window.current_specturum_time='00:00:00';
 
                 Mx.widget = {
                     type: "MENU",
-                    callback: function(event) {
+                    callback: function (event) {
                         _menu_callback(Mx, menu, event);
                     }
                 };
@@ -3775,7 +3783,7 @@ window.current_specturum_time='00:00:00';
      * @param name
      * @private
      */
-    mx.widgetbox = function(Mx, x, y, w, h, inx, iny, inw, inh, name) {
+    mx.widgetbox = function (Mx, x, y, w, h, inx, iny, inw, inh, name) {
         var GBorder = 3;
         mx.shadowbox(Mx, x, y, w, h, 1, 2, "", 0.75);
         if (name) {
@@ -3814,7 +3822,7 @@ window.current_specturum_time='00:00:00';
     //
     // ~= MX$TEXT
     //
-    mx.text = function(Mx, x, y, lbl, color) {
+    mx.text = function (Mx, x, y, lbl, color) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         x = Math.max(0, x);
@@ -4185,9 +4193,9 @@ window.current_specturum_time='00:00:00';
      * @param z
      * @private
      */
-    mx.getcolor = function(Mx, map, z) {
+    mx.getcolor = function (Mx, map, z) {
         var iz = 0;
-        for (; iz < 6 && map[iz + 1].pos === 0; iz++) {}
+        for (; iz < 6 && map[iz + 1].pos === 0; iz++) { }
 
         while (z > map[iz].pos && iz < 6) {
             iz++;
@@ -4241,12 +4249,12 @@ window.current_specturum_time='00:00:00';
      * @param Mx
      * @private
      */
-    mx.redraw_warpbox = function(Mx) {
+    mx.redraw_warpbox = function (Mx) {
         if (Mx.warpbox) {
             if (Mx._animationFrameHandle) {
                 cancelAnimFrame(Mx._animationFrameHandle);
             }
-            Mx._animationFrameHandle = requestAnimFrame(function() {
+            Mx._animationFrameHandle = requestAnimFrame(function () {
                 display_warpbox(Mx);
             });
         }
@@ -4292,7 +4300,7 @@ window.current_specturum_time='00:00:00';
                 h = Mx.b - Mx.t;
             } // else box
 
-            mx.onWidgetLayer(Mx, function() {
+            mx.onWidgetLayer(Mx, function () {
                 mx.erase_window(Mx);
                 mx.draw_box(Mx, "xor", x, y, w, h, warpbox.style.opacity, warpbox.style.fill_color);
             });
@@ -4340,7 +4348,7 @@ window.current_specturum_time='00:00:00';
      * @param leading_nonzer
      * @private
      */
-    mx.format_g = function(num, w, d, leading_nonzero) {
+    mx.format_g = function (num, w, d, leading_nonzero) {
         var w = Math.min(w, d + 7);
         var f = Math.abs(num).toString();
 
@@ -4416,7 +4424,7 @@ window.current_specturum_time='00:00:00';
      * @param d number of digits after the decimal
      * @private
      */
-    mx.format_f = function(num, s, d) {
+    mx.format_f = function (num, s, d) {
         d = Math.max(Math.min(d, 20), 0);
         var f = num.toFixed(d).toString();
         f = mx.pad(f, (s + d), " ");
@@ -4429,7 +4437,7 @@ window.current_specturum_time='00:00:00';
      * @param c
      * @private
      */
-    mx.pad = function(s, size, c) {
+    mx.pad = function (s, size, c) {
         while (s.length < size) {
             s = c + s;
         }
@@ -4448,7 +4456,7 @@ window.current_specturum_time='00:00:00';
      * @private
      */
     // ~= MX$SHADOWBOX
-    mx.legacy_shadowbox = function(Mx, x, y, w, h, shape, func, label) {
+    mx.legacy_shadowbox = function (Mx, x, y, w, h, shape, func, label) {
         var length = label.length; // Original method declaration includes a length - but it only represents the length of the label
 
         var xt = 0; // Originally an int
@@ -4575,7 +4583,7 @@ window.current_specturum_time='00:00:00';
      * @private
      */
     // ~= MX$SHADOWBOX
-    mx.sigplot_shadowbox = function(Mx, x, y, w, h, shape, func, label, alpha) {
+    mx.sigplot_shadowbox = function (Mx, x, y, w, h, shape, func, label, alpha) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         var length = label.length; // Original method declaration includes a length - but it only represents the length of the label
@@ -4626,7 +4634,7 @@ window.current_specturum_time='00:00:00';
         mx.shadowbox = mx.sigplot_shadowbox;
     }
 
-    mx.chevron = function(shape, x, y, w, h, e) {
+    mx.chevron = function (shape, x, y, w, h, e) {
         // Figure out the largest square dimension
         var q = Math.min(w, h);
 
@@ -4721,7 +4729,7 @@ window.current_specturum_time='00:00:00';
      * @private
      */
     // ~= mx_ifevent
-    mx.ifevent = function(Mx, mouseEvent) {
+    mx.ifevent = function (Mx, mouseEvent) {
         Mx.button_press = 0;
         Mx.button_release = 0;
         Mx.state_mask = 0;
@@ -4787,7 +4795,7 @@ window.current_specturum_time='00:00:00';
     // ~= scroll_real2pix
     //
     // TODO Refactor real2pix to return an object instead of sending in reference vars?
-    mx.scroll_real2pix = function(sv) {
+    mx.scroll_real2pix = function (sv) {
         // Param types:
         // sv - mx.SCROLLBAR
 
@@ -4836,7 +4844,7 @@ window.current_specturum_time='00:00:00';
      * @param op Optional op-code for XW_DRAW
      * @private
      */
-    mx.redrawScrollbar = function(sv, Mx, op) {
+    mx.redrawScrollbar = function (sv, Mx, op) {
         var x;
         var y;
         var xcc;
@@ -4939,7 +4947,7 @@ window.current_specturum_time='00:00:00';
      * @returns {number} pixel.clipped - true if the point would have or has been clipped
      * @private
      */
-    mx.real_to_pixel = function(Mx, x, y, clip) {
+    mx.real_to_pixel = function (Mx, x, y, clip) {
         var stk4 = mx.origin(Mx.origin, 4, Mx.stk[Mx.level]);
         if ((stk4.xscl === 0.0) || (stk4.yscl === 0.0)) {
             return {
@@ -4995,7 +5003,7 @@ window.current_specturum_time='00:00:00';
      * @param ypos
      * @private
      */
-    mx.pixel_to_real = function(Mx, xpos, ypos) {
+    mx.pixel_to_real = function (Mx, xpos, ypos) {
         var iretx = Math.min(Mx.r, Math.max(Mx.l, xpos));
         var irety = Math.min(Mx.b, Math.max(Mx.t, ypos));
         var retx;
@@ -5025,7 +5033,7 @@ window.current_specturum_time='00:00:00';
      * @param ncolors
      * @private
      */
-    mx.colormap = function(Mx, map, ncolors) {
+    mx.colormap = function (Mx, map, ncolors) {
         Mx.pixel = new ColorMap(map, {
             ncolors: ncolors
         });
@@ -5040,7 +5048,7 @@ window.current_specturum_time='00:00:00';
      * @param h
      * @private
      */
-    mx.colorbar = function(Mx, x, y, w, h) {
+    mx.colorbar = function (Mx, x, y, w, h) {
         if (!Mx.pixel) {
             m.log.warn("COLORMAP not initialized, cannot draw colorbar");
             return;
@@ -5061,7 +5069,7 @@ window.current_specturum_time='00:00:00';
      * @param h
      * @private
      */
-    mx.legend_colorbar = function(Mx, x, y, w, h) {
+    mx.legend_colorbar = function (Mx, x, y, w, h) {
         if (!Mx.pixel) {
             m.log.warn("COLORMAP not initialized, cannot draw colorbar");
             return;
@@ -5146,7 +5154,7 @@ window.current_specturum_time='00:00:00';
             ctx.mozImageSmoothingEnabled = false;
             ctx.webkitImageSmoothingEnabled = false;
         }
-        ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, w, h);
+        ctx.drawImage(Mx._renderCanvas, sx, 0, sw, sh, x, y, w, Mx._renderCanvas.height);
         ctx.restore();
     }
 
@@ -5244,7 +5252,8 @@ window.current_specturum_time='00:00:00';
             ctx.mozImageSmoothingEnabled = false;
             ctx.webkitImageSmoothingEnabled = false;
         }
-        ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, w, h);
+        ctx.drawImage(Mx._renderCanvas, sx, 0, sw, sh, x, y, w, Mx._renderCanvas.height);
+        // ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, w, h);
         ctx.restore();
     }
 
@@ -5357,7 +5366,7 @@ window.current_specturum_time='00:00:00';
      * @param shift
      * @private
      */
-    mx.shift_image_rows = function(Mx, buf, shift, zerofill) {
+    mx.shift_image_rows = function (Mx, buf, shift, zerofill) {
         var imgd = new Uint32Array(buf);
         if (shift > 0) { // shift down
             shift = shift * buf.width;
@@ -5385,7 +5394,7 @@ window.current_specturum_time='00:00:00';
      * @param zmax
      * @private
      */
-    mx.update_image_row = function(Mx, buf, data, row, zmin, zmax, xcompression) {
+    mx.update_image_row = function (Mx, buf, data, row, zmin, zmax, xcompression) {
         var imgd = new Uint32Array(buf, row * buf.width * 4, buf.width);
 
         Mx.pixel.setRange(zmin, zmax);
@@ -5433,7 +5442,7 @@ window.current_specturum_time='00:00:00';
      * @param zmax
      * @private
      */
-    mx.create_image = function(Mx, data, subsize, w, h, zmin, zmax, xcompression) {
+    mx.create_image = function (Mx, data, subsize, w, h, zmin, zmax, xcompression) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         if (!Mx.pixel) {
@@ -5504,7 +5513,7 @@ window.current_specturum_time='00:00:00';
         return buf;
     };
 
-    mx.resize_image_height = function(Mx, buf, h) {
+    mx.resize_image_height = function (Mx, buf, h) {
         if (buf.height === h) {
             return buf;
         }
@@ -5530,7 +5539,7 @@ window.current_specturum_time='00:00:00';
      * @param smoothing
      * @private
      */
-    mx.put_image = function(Mx, data, nx, ny, nex, ney, xd, yd, level, opacity, smoothing, downscaling) {
+    mx.put_image = function (Mx, data, nx, ny, nex, ney, xd, yd, level, opacity, smoothing, downscaling) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         if (!Mx.pixel) {
@@ -5579,7 +5588,7 @@ window.current_specturum_time='00:00:00';
      * @param smoothing
      * @private
      */
-    mx.draw_image = function(Mx, buf, xmin, ymin, xmax, ymax, opacity, smoothing, downscaling) {
+    mx.draw_image = function (Mx, buf, xmin, ymin, xmax, ymax, opacity, smoothing, downscaling) {
         var view_xmin = Math.max(xmin, Mx.stk[Mx.level].xmin);
         var view_xmax = Math.min(xmax, Mx.stk[Mx.level].xmax);
         var view_ymin = Math.max(ymin, Mx.stk[Mx.level].ymin);
