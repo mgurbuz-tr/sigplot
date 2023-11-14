@@ -54,7 +54,6 @@
         // xbufn = xbuf.byteLength
         // ybufn = ybuf.byteLength
         this.size = 0;
-        this.mode = "XDELTA"; // xdelta mode, "XY" is other mode
 
         this.display = true;
         this.color = 0;
@@ -77,7 +76,7 @@
         this.yptr = null;
         this.xpoint = null; // PointArray backed by memory in xptr
         this.ypoint = null; // PointArray backed by memory in yptr
-        this.firstpush = false;
+
         this.options = {};
     };
 
@@ -123,10 +122,6 @@
                 this.size = options.framesize;
             }
 
-            if (options.mode) {
-                this.mode = options.mode;
-            }
-
             // pipe data requires a valid size on overlay, but
             // other data can work without a valid size because
             // the reload() function will correctly update the size
@@ -143,25 +138,15 @@
             }
 
             this.skip = 1;
-            if ((this.cx) || (this.mode === "XY")) {
+            if (this.cx) {
                 this.skip = 2;
             }
 
             this.xstart = hcb.xstart;
             this.xdelta = hcb.xdelta;
-
-            if ((this.size > 0) && (this.mode === "XDELTA")) {
-                // a single data-point is not infintesimally small, so xmin/xmax
-                // are defined as the start of the data point, hence we subtract
-                // one from the size.  This logic works if xdelta is postive or
-                // negagive
-                var d = hcb.xstart + hcb.xdelta * (this.size - 1.0);
-                this.xmin = Math.min(hcb.xstart, d);
-                this.xmax = Math.max(hcb.xstart, d);
-            } else {
-                this.xmin = 0;
-                this.xmax = 0;
-            }
+            var d = hcb.xstart + hcb.xdelta * (this.size - 1.0);
+            this.xmin = Math.min(hcb.xstart, d);
+            this.xmax = Math.max(hcb.xstart, d);
 
             this.xlab = hcb.xunits;
             this.ylab = hcb.yunits; // might be undefined
@@ -226,6 +211,10 @@
                 }
                 tl = tle * this.hcb.spa;
             }
+
+            if (this.plot._Gx.autol !== 0) {
+                this.plot.rescale();
+            }
         },
 
         get_data: function(xmin, xmax) {
@@ -234,16 +223,18 @@
 
             var skip = this.skip;
 
-            var size = this.size;
+            var size;
+            if (HCB["class"] === 2) {
+                size = HCB.subsize;
+            } else {
+                size = HCB.size;
+            }
 
             var imin = 0;
             var imax = 0;
             if (Gx.index) {
                 imin = Math.floor(xmin);
                 imax = Math.floor(xmax + 0.5);
-            } else if (this.mode === "XY") {
-                imin = 0;
-                imax = size - 1;
             } else if (HCB.xdelta >= 0.0) {
                 imin = Math.floor((xmin - HCB.xstart) / HCB.xdelta) - 1;
                 imax = Math.floor((xmax - HCB.xstart) / HCB.xdelta + 0.5);
@@ -253,7 +244,7 @@
                 imax = Math.floor((xmin - HCB.xstart) / HCB.xdelta + 0.5);
             }
             imin = Math.max(0.0, imin);
-            imax = Math.min(size - 1, imax);
+            imax = Math.min(size, imax);
 
             var npts = Math.max(0.0, Math.min(imax - imin + 1, Gx.bufmax));
             if (HCB.xdelta < 0) {
@@ -338,8 +329,9 @@
             this.hcb.setData(data);
 
             // Setting these causes refresh() to refetch
-            this.imin = -1;
-            this.size = this.hcb.size;
+            this.imin = 0;
+            this.xstart = undefined;
+            this.size = 0;
 
             var xmin = this.xmin;
             var xmax = this.xmax;
@@ -394,11 +386,6 @@
                 m.filad(this.hcb, data, sync);
             }
 
-            // if this is the first push of data, request a rescale
-            if (this.firstpush === false) {
-                this.firstpush = true;
-                hdrmod = true;
-            }
             return hdrmod ? true : false;
 
         },
@@ -407,12 +394,7 @@
             var Gx = this.plot._Gx;
             var Mx = this.plot._Mx;
 
-            this.get_data(xmin, xmax);
-
             var npts = Math.ceil(this.size);
-            if (this.mode === "XY") {
-                npts = Math.floor(npts / 2);
-            }
 
             var skip = this.skip;
 
@@ -438,15 +420,15 @@
             var n1, n2;
             var mxmn;
             // xsub isn't really used yet, so it can largely be ignored
-            if ((Gx.cmode === 5) || (this.xsub > 0) || (this.mode === "XY")) {
+            if ((Gx.cmode === 5) || (this.xsub > 0)) {
                 if (npts <= 0) {
                     // This is a degenerate case when there are no points
                     qmin = Gx.panxmin;
                     qmax = Gx.panxmax;
-                } else if ((Gx.cmode !== 5) && (this.mode === "XDELTA")) {
+                } else if (Gx.cmode !== 5) {
                     // Largely unused code since xsub isn't used
                     this.xpoint = new m.PointArray(this.xbuf);
-                } else if ((this.cx) || (this.mode === "XY")) {
+                } else if (this.cx) {
                     // This is the pre-dominate condition
                     m.vmov(dbuf, skip, this.xpoint, 1, npts);
                 } else if (this.line !== 0) {
@@ -472,10 +454,6 @@
                     qmin = mxmn.smin;
                     n1 = 0;
                     n2 = npts;
-                }
-                if ((this.cx) || (this.mode === "XY")) {
-                    this.xmin = qmin;
-                    this.xmax = qmax;
                 }
             } else if (npts > 0) {
                 var xstart = this.xstart;
@@ -508,6 +486,14 @@
                 }
             }
 
+            if (Gx.panxmin > Gx.panxmax) {
+                Gx.panxmin = qmin;
+                Gx.panxmax = qmax;
+            } else {
+                Gx.panxmin = Math.min(Gx.panxmin, qmin);
+                Gx.panxmax = Math.max(Gx.panxmax, qmax);
+            }
+
             if (npts <= 0) {
                 m.log.debug("Nothing to plot");
                 return {
@@ -535,8 +521,6 @@
                 } else if (Gx.cmode >= 4) {
                     m.vmov(dbuf.subarray(1), skip, this.ypoint, 1, npts);
                 }
-            } else if (this.mode === "XY") {
-                m.vmov(dbuf.subarray(1), skip, this.ypoint, 1, npts);
             } else {
                 if (Gx.cmode === 5) { // I vs. R
                     m.vfill(this.ypoint, 0, npts);
@@ -577,105 +561,30 @@
                 qmin = qmin - 1.0;
                 qmax = qmax + 1.0;
             } else {
-                // TODO move exansion of qmin/qmax nito
                 qmin = qmin - 0.02 * yran;
                 qmax = qmax + 0.02 * yran;
+            }
+
+            if (Mx.level === 0) {
+                if (Gx.panymin > Gx.panymax) {
+                    Gx.panymin = qmin;
+                    Gx.panymax = qmax;
+                } else {
+                    Gx.panymin = Math.min(Gx.panymin, qmin);
+                    Gx.panymax = Math.max(Gx.panymax, qmax);
+                }
+
+                if (Gx.autol > 1) {
+                    var fac = 1.0 / (Math.max(Gx.autol, 1));
+                    Gx.panymin = Gx.panymin * fac + Mx.stk[0].ymin * (1.0 - fac);
+                    Gx.panymax = Gx.panymax * fac + Mx.stk[0].ymax * (1.0 - fac);
+                }
             }
 
             return {
                 num: npts,
                 start: n1,
-                end: n2,
-                panxmin: this.xmin,
-                panxmax: this.xmax,
-                panymin: qmin,
-                panymax: qmax
-            };
-        },
-
-        /**
-         * Get the pan-boundaries for the layer.
-         * 
-         * @param {*} view 
-         *   - a specific view to calculate the bounds against
-         */
-        get_pan_bounds: function(view) {
-            var Mx = this.plot._Mx;
-            var Gx = this.plot._Gx;
-
-            var xmin;
-            // Minic legacy XPLOT behavior; by default the 
-            // pan boundaries are based off the first bufmax of
-            // points.
-            var xmax;
-            if (this.xdelta >= 0) {
-                xmin = this.xmin;
-                xmax = Math.min(
-                    xmin + (this.size * this.xdelta),
-                    xmin + (Gx.bufmax * this.xdelta)
-                );
-            } else {
-                xmax = this.xmax;
-                xmin = Math.max(
-                    xmax + (this.size * this.xdelta),
-                    xmax + (Gx.bufmax * this.xdelta)
-                );
-            }
-
-            if (view) {
-                xmin = view.xmin;
-                xmax = view.xmax;
-            } else if (Gx.all && Gx.expand) {
-                // If we are expanding, then xmin/xmax need to be the full range
-                xmin = this.xmin;
-                xmax = this.xmax;
-            }
-
-            let panymin;
-            let panymax;
-            let num = 0;
-
-            while (xmin < xmax) {
-                let prep = this.prep(xmin, xmax);
-
-                panymin = (panymin === undefined) ? prep.panymin : Math.min(panymin, prep.panymin);
-                panymax = (panymax === undefined) ? prep.panymax : Math.max(panymax, prep.panymax);
-                num += prep.num;
-
-                if (Gx.all) {
-                    if (this.size === 0) {
-                        xmin = xmax;
-                    } else {
-                        if (Gx.index) {
-                            xmin = xmin + prep.num;
-                        } else {
-                            if (this.xdelta >= 0) {
-                                xmin = xmin + (prep.num * this.xdelta);
-                            } else {
-                                xmax = xmax + (prep.num * this.xdelta);
-                            }
-                        }
-                    }
-                } else {
-                    xmin = xmax;
-                }
-            }
-
-            if (panymin === undefined) {
-                panymin = 0;
-            }
-            if (panymax === undefined) {
-                panymax = 0;
-            }
-            this.ymin = panymin;
-            this.ymax = panymax;
-
-            return {
-                num: num,
-                xmin: this.xmin,
-                xmax: this.xmax,
-                ymin: this.ymin,
-                ymax: this.ymax
+                end: n2
             };
         },
 
@@ -739,31 +648,33 @@
                 }
             }
 
-            if ((line === 0) && (symbol === 0)) {
-                // Nothing to draw
-                return {
-                    num: 0,
-                };
+            if (!Gx.all) {
+                var xran = (Gx.bufmax - 1.0) * xdelta;
+                if (xran >= -0.0) {
+                    xmax = Math.min(xmax, xmin + xran);
+                } else {
+                    xmin = Math.max(xmin, xmax + xran);
+                }
             }
 
-            let panymin;
-            let panymax;
-            let num = 0;
-
+            if ((line === 0) && (symbol === 0)) {
+                // Nothing to draw
+                return;
+            }
             while (xmin < xmax) {
                 //if (Gx.all) {
                 // TODO allow interrupt of all by mouse clicks
                 //}
 
+                if (!this.hcb.pipe) {
+                    // get_data fills in the layer xbuf/ybuf with data
+                    this.get_data(xmin, xmax);
+                }
+
                 // sigplot_prep fills in this.xptr and this.yptr (both m.PointArray)
                 // with the data to be plotted
 
                 var pts = this.prep(xmin, xmax);
-
-                panymin = (panymin === undefined) ? pts.panymin : Math.min(panymin, pts.panymin);
-                panymax = (panymax === undefined) ? pts.panymax : Math.max(panymax, pts.panymax);
-                num += pts.num;
-
                 if (pts.num > 0) {
                     if (segment) {
                         // TODO
@@ -782,18 +693,22 @@
                     }
                 }
 
-                if (this.size === 0) {
-                    xmin = xmax;
-                } else {
-                    if (Gx.index) {
-                        xmin = xmin + pts.num;
+                if (Gx.all) {
+                    if (this.size === 0) {
+                        xmin = xmax;
                     } else {
-                        if (xdelta >= 0) {
-                            xmin = xmin + (this.size * xdelta);
+                        if (Gx.index) {
+                            xmin = xmin + pts.num;
                         } else {
-                            xmax = xmax + (this.size * xdelta);
+                            if (xdelta >= 0) {
+                                xmin = xmin + (this.size * xdelta);
+                            } else {
+                                xmax = xmax + (this.size * xdelta);
+                            }
                         }
                     }
+                } else {
+                    xmin = xmax;
                 }
             }
 
@@ -803,17 +718,6 @@
                     mx.draw_line(Mx, "white", pnt.x, Mx.t, pnt.x, Mx.b);
                 }
             }
-
-            this.ymin = panymin;
-            this.ymax = panymax;
-
-            return {
-                num: num,
-                xmin: this.xmin,
-                xmax: this.xmax,
-                ymin: this.ymin,
-                ymax: this.ymax
-            };
         },
 
         /**

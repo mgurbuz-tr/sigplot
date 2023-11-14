@@ -1,8 +1,7 @@
 {
-  "name": "sigplot",
-  "description": "Advanced plotting for signal processing applications",
-  "version": "2.0.0-rc21",
-  "homepage": "http://sigplot.lgsinnovations.com",
+  "name": "bazlambacforever",
+  "description": "Yozgatın gururu!",
+  "version": "2.0.1-rc19",
   "main": "js/sigplot.js",
   "files": [
     "js",
@@ -15,35 +14,13 @@
     "dist/sigplot.plugins-debug.js",
     "dist/sigplot.plugins-minimized.js"
   ],
-  "author": {
-    "name": "LGS Innovations, Inc.",
-    "email": "sigplot@lgsinnovations.com",
-    "url": "http://www.lgsinnovations.com"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git://github.com/LGSInnovations/sigplot.git"
-  },
-  "bugs": {
-    "url": "https://github.com/LGSInnovations/sigplot/issues"
-  },
-  "license": "apache-2.0",
-  "licenses": [
-    {
-      "type": "apache-2.0",
-      "url": "http://www.apache.org/licenses/LICENSE-2.0"
-    }
-  ],
   "scripts": {
-    "build": "grunt dist",
     "generate-docs": "rm -rf ./doc/; node_modules/.bin/jsdoc --configure .jsdoc.json --verbose; cp ./fft-white.png doc/sigplot/$npm_package_version/",
-    "serve": "budo js/sigplot.js --live -p 1337 -v . -- --standalone=sigplot",
-    "test": "grunt test"
+    "test": "grunt test",
+    "prepublish": "grunt dist"
   },
   "dependencies": {
-    "budo": "^11.6.4",
     "loglevel": "^1.4.1",
-    "lru": "^3.1.0",
     "sigfile": "^0.1.9",
     "spin": "0.0.1",
     "tinycolor2": "^1.4.1",
@@ -51,14 +28,13 @@
     "underscore": "^1.9.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.10.5",
-    "@babel/preset-env": "^7.10.4",
+    "@babel/core": "^7.3.3",
+    "@babel/preset-env": "^7.3.1",
     "babelify": "^10.0.0",
-    "bootstrap": "^5.0.0-beta3",
     "catharsis": "^0.8.9",
     "express": "^4.13.4",
-    "grunt": "^1.4.0",
-    "grunt-browserify": "^5.0.0",
+    "grunt": "^1.0.3",
+    "grunt-browserify": "^5.0.0", 
     "grunt-cli": "^1.3.2",
     "grunt-closure-compiler": "^0.0.21",
     "grunt-contrib-clean": "^1.1.0",
@@ -85,7 +61,6 @@
     "minami": "^1.2.3",
     "qunit-assert-close": "^2.1.2",
     "qunitjs": "^2.4.1",
-    "taffydb": "^2.7.3",
-    "underscore": "^1.9.2"
+    "taffydb": "^2.7.3"
   }
 }

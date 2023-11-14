@@ -39,9 +39,16 @@
 /* global require */
 /* global requestAnimFrame */
 /* global cancelAnimFrame */
+class waterfallData{
+    constructor(data){
+         this.data = data;
+    }
+}
+window.current_specturum_time='00:00:00';
 
 (function() {
-
+    var anc = {};
+    var ancstatus = false;
     var tinycolor = require("tinycolor2");
     var ColorMap = require("./ColorMap");
     var common = require("./common");
@@ -98,11 +105,6 @@
      * Set to True for a retro look that would make hipsters proud
      */
     mx.LEGACY_RENDER = false;
-
-    /**
-     * Set to True to enable legacy behaviors for people with strong muscle memory
-     */
-    mx.LEGACY_BEHAVIOR = false;
 
     /**
      * The zoom stack structure object
@@ -182,6 +184,11 @@
      */
     function MX(element) { // this is where the canvases are setup/defined
         this.root = element;
+        ancstatus = true;
+        for(var prop in anc){
+			delete anc[prop]
+		};
+    
 
         // Create a div to hold all the various canvas layers
         this.parent = document.createElement('div');
@@ -234,7 +241,6 @@
         this.ymrk = 0.0;
         this.origin = 1;
         this.stk = [new mx.STKSTRUCT()]; // zoom stack
-        this.mouseOver = false;
 
         mx.setbgfg(this, "black", "white");
 
@@ -321,7 +327,7 @@
                 Mx.y = e.y || e.clientY;
                 // Plot relative x/y of mouse
                 Mx.xpos = (e.offsetX === undefined) ? (e.pageX - rect.left - window.scrollX) : e.offsetX;
-                Mx.ypos = (e.offsetY === undefined) ? (e.pageY - rect.top - window.scrollY) : e.offsetY;
+                Mx.ypos = (e.offsetX === undefined) ? (e.pageY - rect.top - window.scrollY) : e.offsetY;
 
                 //				Mx.xpos = (e.offsetX === undefined) ? e.layerX : e.offsetX;
                 //				Mx.ypos = (e.offsetY === undefined) ? e.layerY : e.offsetY;
@@ -378,20 +384,6 @@
             return function(event) {
                 event.preventDefault();
                 mx.widget_callback(Mx, event);
-                return false;
-            };
-        })(Mx);
-
-        Mx.onmouseover = (function(Mx) {
-            return function(event) {
-                Mx.mouseOver = true;
-                return false;
-            };
-        })(Mx);
-
-        Mx.onmouseleave = (function(Mx) {
-            return function(event) {
-                Mx.mouseOver = false;
                 return false;
             };
         })(Mx);
@@ -470,8 +462,6 @@
         mx.addEventListener(Mx, "mousemove", Mx.onmousemove, false);
         window.addEventListener("mouseup", Mx.onmouseup, false);
         mx.addEventListener(Mx, "mousedown", Mx.onmousedown, false);
-        mx.addEventListener(Mx, "mouseover", Mx.onmouseover, false);
-        mx.addEventListener(Mx, "mouseleave", Mx.onmouseleave, false);
         window.addEventListener("keydown", Mx.onkeydown, false);
         window.addEventListener("keyup", Mx.onkeyup, false);
         //mx.addEventListener(Mx, "touchend", Mx.ontouchend);
@@ -487,8 +477,6 @@
         mx.removeEventListener(Mx, "mousemove", Mx.onmousemove, false);
         window.removeEventListener("mouseup", Mx.onmouseup, false);
         mx.removeEventListener(Mx, "mousedown", Mx.onmousedown, false);
-        mx.removeEventListener(Mx, "mouseover", Mx.onmouseover, false);
-        mx.removeEventListener(Mx, "mouseleave", Mx.onmouseleave, false);
         window.removeEventListener("keydown", Mx.onkeydown, false);
         window.removeEventListener("keyup", Mx.onkeyup, false);
         //mx.addEventListener(Mx, "touchend", Mx.ontouchend);
@@ -1491,17 +1479,6 @@
         var ymin = Math.min(stk4.ymin, stk4.ymax);
         var xmax = xmin + dx;
         var ymax = ymin + dy;
-        if (options.pixels) {
-            xscl = 1.0;
-            xxmin = 0;
-            yscl = 1.0;
-            yymin = 0;
-            xmin = 0;
-            ymin = 0;
-            xmax = Math.round(Mx.r - Mx.l);
-            ymax = Math.round(Mx.b - Mx.t);
-
-        }
         //dx = dx * 0.5;
         //if ((line == -1) || (line == 1)) {
         //	dy = dy * 10.0;
@@ -1521,7 +1498,6 @@
 
         var ib = 0;
         if ((line === 0) && (symb !== 0)) {
-            // We are drawing symbols only
             for (var n = (skip - 1); n < npts; n += skip) {
                 var x = xpoint[n];
                 var y = ypoint[n];
@@ -1534,7 +1510,6 @@
             }
         }
         if (options.vertsym === true) {
-            // we are drawing verticle lines on each symbol
             for (var n = (skip - 1); n < npts; n += skip) {
                 var x = xpoint[n];
                 var y = ypoint[n];
@@ -1550,7 +1525,6 @@
             }
         }
         if (options.horzsym === true) {
-            // we are drawing horizontal lines on each symbol
             for (var n = (skip - 1); n < npts; n += skip) {
                 var x = xpoint[n];
                 var y = ypoint[n];
@@ -1741,11 +1715,16 @@
                     ie = ie + 1;
                 }
                 if (symb !== 0 && (ib - ie) > 1) {
+                    // TODO ib - 1 is used below because
+                    // otherwise the last point has undefined
+                    // for it's x/y coordinates...but this may
+                    // be a bug because it may neglect drawing
+                    // the last data point
                     mx.draw_symbols(Mx,
                         color,
-                        pixx.subarray(ie, ib),
-                        pixy.subarray(ie, ib),
-                        ib - ie,
+                        pixx.subarray(ie - 1, ib),
+                        pixy.subarray(ie - 1, ib),
+                        ib - ie - 1,
                         symb,
                         rad,
                         n - ib + istart);
@@ -2927,6 +2906,7 @@
      */
     // ~= MX$FDRAWAXIS
     mx.drawaxis = function(Gx, Mx, xdiv, ydiv, xlab, ylab, flags) {
+        ydiv = Gx.ydiv;
         var stk1 = mx.origin(Mx.origin, 1, Mx.stk[Mx.level]);
         var iscl = 0;
         var isct = 0;
@@ -3097,18 +3077,6 @@
         //
         // However, it's probably more important to decide this based off the significant digits of the
         // tic labels.  In other words, if the tics cannot be labeled uniquely then you need to make sp=0.
-
-        var endticx;
-        if (stk1.xmax >= stk1.xmin) {
-            endticx = function(val) {
-                return (val <= stk1.xmax);
-            };
-        } else {
-            endticx = function(val) {
-                return (val >= stk1.xmax);
-            };
-        }
-
         var sp = 1;
         var x;
         var xlbl = "";
@@ -3120,7 +3088,7 @@
             } else {
                 // Ensure that all of the tic labels will render uniquely
                 var last_xlbl;
-                for (x = xTIC.dtic1; endticx(x); x = x + xTIC.dtic) {
+                for (x = xTIC.dtic1; x <= stk1.xmax; x = x + xTIC.dtic) {
                     xlbl = mx.format_f(x * fmul, xlbl_maxlen, xlbl_maxlen / 2);
                     if (xlbl === last_xlbl) {
                         sp = 0;
@@ -3137,7 +3105,7 @@
         var i;
         ix = 0;
         xlbl = "";
-        for (x = xTIC.dtic1; endticx(x); x = x + xTIC.dtic) {
+        for (x = xTIC.dtic1; x <= stk1.xmax; x = x + xTIC.dtic) {
             i = iscl + Math.round(fact * (x - stk1.xmin)) + 2;
             if (i < iscl) {
                 continue;
@@ -3230,21 +3198,22 @@
         } else {
             fmul = 1;
         }
-        var ytic, ytic1, endticy;
+        var ytic, ytic1, endtic;
         if (yTIC.dtic === 0) {
             ytic = stk1.ymax - ytic1 + 1.0;
         }
         if (stk1.ymax >= stk1.ymin) {
-            endticy = function(val) {
+            endtic = function(val) {
                 return (val <= stk1.ymax);
             };
         } else {
-            endticy = function(val) {
+            endtic = function(val) {
                 return (val >= stk1.ymax);
             };
         }
         var ylbl;
-        for (var y = yTIC.dtic1; endticy(y); y = y + yTIC.dtic) {
+        var vvv = 1;
+        for (var y = yTIC.dtic1; endtic(y); y = y + yTIC.dtic) {
             i = iscb + Math.round(fact * (y - stk1.ymin)) - 2;
             if (i > iscb) {
                 continue;
@@ -3268,7 +3237,28 @@
                     ((i < isct + Mx.text_h) || (i > iscb - Mx.text_h * 2))) {
                     // out of range for inside labels
                 } else if (flags.ytimecode) {
-                    ylbl = m.sec2tod(y); // don't trim zeros because we use them later
+                    if(ancstatus){
+                        ancstatus = false;
+                        break;
+                    }
+                    if((y < 0 || yTIC.dtic1 === 0)){
+                        continue;
+                    }
+
+                    var count = ( y / yTIC.dtic);
+                    if(anc[count] === undefined){
+                         var keys = Object.keys(anc);
+                        if(keys.length === ydiv){
+                            delete anc[keys[0]]
+                        }
+                            var data = window.current_specturum_time;
+                            var wData = new waterfallData(data);
+                            anc[count] = (wData);
+                    }
+
+
+                    ylbl = anc[count].data;
+                    // don't trim zeros because we use them later
                     // y-axis timecodes
                     // use three lines
                     // YYYY:MM:DD
@@ -3284,7 +3274,8 @@
                         sep += 1; // adjust for the next stage
                     }
                     // The draw the primary portion
-                    mx.text(Mx, itext, Math.min(iscb, i + jtext), ylbl.substring(sep + 1, sep + 6));
+                    Mx.font.font = '10px Courier New, monospace';
+                    mx.text(Mx, itext, Math.min(iscb, i + jtext), ylbl);
                     // Finally the sections portion if it fits on the screen
                     // and is necessary
                     k = i + jtext + Mx.text_h;
@@ -3294,7 +3285,7 @@
                             // we truncate on the following line and we know that
                             // sec2tod either returns no decimal places or 6 decimal places
                             ylbl = ylbl + ".00";
-                            mx.text(Mx, itext, k, ylbl.substring(sep + 7, sep + 12));
+                            //mx.text(Mx, itext, k, ylbl.substring(sep + 7, sep + 12));
                         }
                     }
                 } else {
@@ -4279,13 +4270,8 @@
             ((Mx.ypos >= warpbox.ymin) && (Mx.ypos <= warpbox.ymax))) {
 
             // Update the position
-            if (mx.LEGACY_BEHAVIOR) {
-                warpbox.xl = Mx.xpos;
-                warpbox.yl = Mx.ypos;
-            } else {
-                warpbox.xl = Math.min(Mx.r, Math.max(Mx.xpos, Mx.l));
-                warpbox.yl = Math.min(Mx.b, Math.max(Mx.ypos, Mx.t));
-            }
+            warpbox.xl = Mx.xpos;
+            warpbox.yl = Mx.ypos;
 
             // Draw the current box
             var x = Math.min(warpbox.xo, warpbox.xl);
@@ -4944,49 +4930,6 @@
         sv.sw = sw;
     };
 
-    mx.real_distance_to_pixel = function(Mx, x1, y1, x2, y2, clip) {
-        var pos1 = mx.real_to_pixel(Mx, x1, y1, clip);
-        var pos2 = mx.real_to_pixel(Mx, x2, y2, clip);
-
-        var dx = pos2.x - pos1.x;
-        var dy = pos2.y - pos1.y;
-
-        return {
-            x: dx,
-            y: dy,
-            d: Math.sqrt((dx * dx) + (dy * dy)),
-            clipped: pos1.clipped || pos2.clipped
-        };
-    };
-
-    mx.real_box_to_pixel = function(Mx, x, y, w, h, clip) {
-        var ul, lr;
-        if (Mx.origin === 1) {
-            // regular x, regular y
-            ul = mx.real_to_pixel(Mx, x, y, clip);
-            lr = mx.real_to_pixel(Mx, x + w, y - h, clip);
-        } else if (Mx.origin === 2) {
-            // inverted x, regular y
-            ul = mx.real_to_pixel(Mx, x, y, clip);
-            lr = mx.real_to_pixel(Mx, x - w, y - h, clip);
-        } else if (Mx.origin === 3) {
-            // inverted x, inverted y
-            ul = mx.real_to_pixel(Mx, x, y, clip);
-            lr = mx.real_to_pixel(Mx, x - w, y + h, clip);
-        } else if (Mx.origin === 4) {
-            // regular x, inverted y
-            ul = mx.real_to_pixel(Mx, x, y, clip);
-            lr = mx.real_to_pixel(Mx, x + w, y + h, clip);
-        }
-        return {
-            ul: ul,
-            lr: lr,
-            w: lr.x - ul.x,
-            h: lr.y - ul.y,
-            clipped: ul.clipped || lr.clipped
-        };
-    };
-
     /**
      * @param {Object} Mx - the Mx object
      * @param {number} x - the real-world x coordinate
@@ -5018,34 +4961,18 @@
         var clipped_y = false;
 
         if (x !== null) {
-            if ((Mx.origin === 1) || (Mx.origin === 4)) {
-                clipped_x = ((x > stk4.xmax) || (x < stk4.xmin));
-                if (clip) {
-                    x = Math.min(x, stk4.xmax);
-                    x = Math.max(x, stk4.xmin);
-                }
-            } else {
-                clipped_x = ((x < stk4.xmax) || (x > stk4.xmin));
-                if (clip) {
-                    x = Math.max(x, stk4.xmax);
-                    x = Math.min(x, stk4.xmin);
-                }
+            clipped_x = ((x > stk4.xmax) || (x < stk4.xmin));
+            if (clip) {
+                x = Math.min(x, stk4.xmax);
+                x = Math.max(x, stk4.xmin);
             }
             x = Math.round((x - xxmin) * xscl) + left;
         }
         if (y !== null) {
-            if ((Mx.origin === 1) || (Mx.origin === 2)) {
-                clipped_y = ((y > stk4.ymin) || (y < stk4.ymax));
-                if (clip) {
-                    y = Math.min(y, stk4.ymin);
-                    y = Math.max(y, stk4.ymax);
-                }
-            } else {
-                clipped_y = ((y < stk4.ymin) || (y > stk4.ymax));
-                if (clip) {
-                    y = Math.max(y, stk4.ymin);
-                    y = Math.min(y, stk4.ymax);
-                }
+            clipped_y = ((y > stk4.ymin) || (y < stk4.ymax));
+            if (clip) {
+                y = Math.min(y, stk4.ymin);
+                y = Math.max(y, stk4.ymax);
             }
             y = Math.round((y - yymin) * yscl) + top;
         }
@@ -5180,7 +5107,7 @@
      * @param h
      *   optional height
      */
-    function renderImageNoTypedArrays(Mx, ctx, buf, opacity, downscaling, smoothing, x, y, w, h, sx, sy, sw, sh, rotationAngle) {
+    function renderImageNoTypedArrays(Mx, ctx, buf, opacity, downscaling, smoothing, x, y, w, h, sx, sy, sw, sh) {
         if (sx === undefined) {
             sx = 0;
         }
@@ -5219,14 +5146,7 @@
             ctx.mozImageSmoothingEnabled = false;
             ctx.webkitImageSmoothingEnabled = false;
         }
-        if (rotationAngle) {
-            ctx.translate(x + w / 2, y + h / 2);
-            ctx.rotate(-Math.PI / 2);
-            ctx.translate(-(x + h / 2), -(y + w / 2));
-            ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, h, w);
-        } else {
-            ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, w, h);
-        }
+        ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, w, h);
         ctx.restore();
     }
 
@@ -5258,7 +5178,7 @@
      * @param h
      *   optional height
      */
-    function renderImageTypedArrays(Mx, ctx, buf, opacity, downscaling, smoothing, x, y, w, h, sx, sy, sw, sh, rotationAngle) {
+    function renderImageTypedArrays(Mx, ctx, buf, opacity, downscaling, smoothing, x, y, w, h, sx, sy, sw, sh) {
         if (sx === undefined) {
             sx = 0;
         }
@@ -5285,16 +5205,9 @@
             // for-loop based approach
             var src = new Uint32Array(buf);
             var dst = new Uint32Array(imgd.data.buffer);
-            if (buf.contents !== "rgba") {
-                for (var ii = 0; ii < src.length; ii++) {
-                    dst[ii] = Mx.pixel.getColorByIndex(src[ii]).color;
-                }
-            } else {
-                for (var ii = 0; ii < src.length; ii++) {
-                    dst[ii] = src[ii];
-                }
+            for (var ii = 0; ii < src.length; ii++) {
+                dst[ii] = Mx.pixel.getColorByIndex(src[ii]).color;
             }
-
             imgctx.putImageData(imgd, 0, 0);
         } else {
             if (!downscaling) {
@@ -5331,20 +5244,13 @@
             ctx.mozImageSmoothingEnabled = false;
             ctx.webkitImageSmoothingEnabled = false;
         }
-        if (rotationAngle) {
-            ctx.translate(x + w / 2, y + h / 2);
-            ctx.rotate(rotationAngle);
-            ctx.translate(-(x + h / 2), -(y + w / 2));
-            ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, h, w);
-        } else {
-            ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, w, h);
-        }
+        ctx.drawImage(Mx._renderCanvas, sx, sy, sw, sh, x, y, w, h);
         ctx.restore();
     }
 
     /**
      * Scale the image data (represented by buf) into the destination canvas
-     * using nearest neighbor.  In general, you should just use the scaling
+     * using nearest neighbor.  In genearl, you should just use the scaling
      * provided by drawImage...but if the buf is greater than 32767 pixels in
      * either dimension that won't work and you have to use this.
      *
@@ -5400,18 +5306,14 @@
         // one loop with the downscaling if condition inside; but benchmarking
         // has shown this approach to be almost twice as fast for the condition
         // where downscaling isn't used
-        if (!downscaling || buf.contents === "rgba") {
+        if (!downscaling) {
             for (var ii = 0; ii < dest.length; ii++) {
                 xx = Math.floor(ii % w * width_scaling) + sx;
                 yy = Math.floor(ii / w * height_scaling) + sy;
                 jj = Math.floor((yy * buf.width) + xx);
 
                 value = src[jj];
-                if (buf.contents !== "rgba") {
-                    dest[ii] = colorMap.getColorByIndex(value).color;
-                } else {
-                    dest[ii] = src[jj];
-                }
+                dest[ii] = colorMap.getColorByIndex(value).color;
             }
         } else {
             for (var ii = 0; ii < dest.length; ii++) {
@@ -5523,54 +5425,6 @@
 
     /**
      * @param Mx
-     * @param img
-     * @param data
-     * @param row
-     * @param zmin
-     * @param zmax
-     * @private
-     */
-    mx.update_image_col = function(Mx, buf, data, col, zmin, zmax, xcompression) {
-        var imgd = new Uint32Array(buf);
-
-        Mx.pixel.setRange(zmin, zmax);
-
-        //
-        var xc = Math.max(1, data.length / buf.height);
-        for (var i = 0; i < buf.height; i++) {
-            var didx = Math.floor(i * xc);
-            var value = data[didx];
-            if (xc > 1) {
-                if (xcompression === 1) { // average
-                    for (var j = 1; j < xc; j++) {
-                        value += data[didx + j];
-                    }
-                    value = (value / xc);
-                } else if (xcompression === 2) { // min
-                    for (var j = 1; j < xc; j++) {
-                        value = Math.min(value, data[didx + j]);
-                    }
-                } else if (xcompression === 3) { // max
-                    for (var j = 1; j < xc; j++) {
-                        value = Math.max(value, data[didx + j]);
-                    }
-                } else if (xcompression === 4) { // first
-                    value = data[i];
-                } else if (xcompression === 5) { // max abs
-                    for (var j = 1; j < xc; j++) {
-                        value = Math.max(Math.abs(value), Math.abs(data[didx + j]));
-                    }
-                }
-            }
-            var colorIdx = Mx.pixel.getColorIndex(value);
-            imgd[((buf.height - i) * buf.width) + col] = colorIdx;
-        }
-
-        return imgd;
-    };
-
-    /**
-     * @param Mx
      * @param data
      * @param w
      * @param h
@@ -5579,7 +5433,7 @@
      * @param zmax
      * @private
      */
-    mx.create_image = function(Mx, data, subsize, w, h, zmin, zmax, xcompression, drawdirection) {
+    mx.create_image = function(Mx, data, subsize, w, h, zmin, zmax, xcompression) {
         var ctx = Mx.active_canvas.getContext("2d");
 
         if (!Mx.pixel) {
@@ -5587,11 +5441,6 @@
             Mx.pixel = new ColorMap(m.Mc.colormap[1].colors);
         }
 
-        if (drawdirection === "horizontal") {
-            let tmp = w;
-            w = h;
-            h = tmp;
-        }
 
         Mx.pixel.setRange(zmin, zmax);
         w = Math.ceil(w);
@@ -5600,22 +5449,13 @@
         buf.width = w;
         buf.height = h;
 
-        var nxc;
-        if (drawdirection !== "horizontal") {
-            nxc = Math.max(1, subsize / w);
-        } else {
-            nxc = Math.max(1, subsize / h);
-        }
+        var nxc = Math.max(1, subsize / w);
 
-        // imgd is a flat buffer where index 0 maps to the upper-left corner
         var imgd = new Uint32Array(buf);
         if (data) {
             for (var i = 0; i < imgd.length; i++) {
                 var ix;
                 var iy;
-                var didx;
-
-                // Figure out what pixel we are at (upper left is 0,0)
                 if ((Mx.origin === 1) || (Mx.origin === 4)) {
                     ix = Math.floor(i % w);
                 } else {
@@ -5626,13 +5466,10 @@
                 } else {
                     iy = h - Math.floor(i / w) - 1;
                 }
-
-                // Map that pixel to it's nearest data
-                if (drawdirection !== "horizontal") {
-                    didx = (iy * subsize) + Math.floor(ix * nxc);
-                } else {
-                    didx = (ix * subsize) + Math.floor(iy * nxc);
+                if (iy === 1) {
+                    var test = 1;
                 }
+                var didx = (iy * subsize) + Math.floor(ix * nxc);
                 var value = data[didx];
                 if (nxc > 1) {
                     if (xcompression === 1) { // average
@@ -5681,7 +5518,7 @@
 
     /**
      * @param Mx
-     * @param data array of data
+     * @param data
      * @param nx
      * @param ny
      * @param nex
@@ -5734,32 +5571,20 @@
     /**
      * @param Mx
      * @param buf
-     * @param {number} xmin
-     * @param {number} ymin
-     * @param {number} xmax
-     * @param {number} ymax
-     * @param {number} opacity
-     * @param {number} smoothing
-     * @param {string} downscaling  "avg", "min", "max", or "minmax"
-     * @param {number} rotationAngle  Angle of rotation in radians // TODO-MRA we might need to have very fixed rotations
+     * @param xmin
+     * @param ymin
+     * @param xmax
+     * @param ymax
+     * @param opacity
+     * @param smoothing
      * @private
      */
-    mx.draw_image = function(Mx, buf, xmin, ymin, xmax, ymax, opacity, smoothing, downscaling, rotationAngle, strokeStyle, text) {
-
+    mx.draw_image = function(Mx, buf, xmin, ymin, xmax, ymax, opacity, smoothing, downscaling) {
         var view_xmin = Math.max(xmin, Mx.stk[Mx.level].xmin);
         var view_xmax = Math.min(xmax, Mx.stk[Mx.level].xmax);
         var view_ymin = Math.max(ymin, Mx.stk[Mx.level].ymin);
         var view_ymax = Math.min(ymax, Mx.stk[Mx.level].ymax);
 
-        // On input xmin < xmax and ymin < ymax, so if the view
-        // values have become inverted that means the image it outside
-        // of the bounds established by Mx.stk[Mx.level]
-        if (view_xmax < view_xmin) {
-            return;
-        }
-        if (view_ymax < view_ymin) {
-            return;
-        }
 
         if ((buf.width <= 1) || Math.abs(xmax - xmin) === 0) {
             return;
@@ -5770,104 +5595,51 @@
         var rx = buf.width / (xmax - xmin);
         var ry = buf.height / (ymax - ymin);
 
-        // ul, lr are the upper-left/lower-right in view coordinates
-        // for receiving the rendered source-vuffer
+        // Ensure we are on buffer pixel boundaries, later we use clipping
+        // to constrain to the proper area
+        view_xmin = Math.floor(view_xmin * rx) / rx;
+        view_xmax = Math.ceil(view_xmax * rx) / rx;
+        view_ymin = Math.floor(view_ymin * ry) / ry;
+        view_ymax = Math.ceil(view_ymax * ry) / ry;
+
         var ul, lr;
-
-        // sx, sy, sw, sh are the source-buffer pixels
-        // that have been selected for rendering
         var sy, sx, sw, sh;
-
-        // Determine the actual boundaries of the sub-source
-        // buffer being rendered; which may actually exeed the
-        // view box.  This is cleaned-up using clip()
-        var render_xmin, render_xmax, render_ymin, render_ymax;
-
-        // TODO-MGR handle rotation correctly for other origins
         if (Mx.origin === 1) {
             // regular x, regular y
-            if (!rotationAngle) {
-                sy = Math.max(0, Math.floor((ymax - view_ymax) * ry));
-                sh = Math.min(buf.height - sy, Math.ceil((view_ymax - view_ymin) * ry) + 1);
-                sx = Math.max(0, Math.floor((view_xmin - xmin) * rx));
-                sw = Math.min(buf.width - sx, Math.ceil((view_xmax - view_xmin) * rx) + 1);
+            sy = Math.max(0, Math.floor((ymax - view_ymax) * ry));
+            sh = Math.min(buf.height - sy, Math.floor((view_ymax - view_ymin) * ry));
+            sx = Math.max(0, Math.floor((view_xmin - xmin) * rx));
+            sw = Math.min(buf.width - sx, Math.floor((view_xmax - view_xmin) * rx));
 
-                // Now determine the specific view area
-                render_xmin = (sx / rx) + xmin;
-                render_xmax = ((sx + sw) / rx) + xmin;
-                render_ymin = ymax - ((sy + sh) / ry);
-                render_ymax = ymax - (sy / ry);
-
-                ul = mx.real_to_pixel(Mx, render_xmin, render_ymax);
-                lr = mx.real_to_pixel(Mx, render_xmax, render_ymin);
-            } else if (Math.abs(rotationAngle - (-Math.PI / 2)) < 1E-12) {
-                // The x-axis is now distributed against the height of the buffer
-                // and the y-axis against the width of the buffer
-                rx = buf.height / (xmax - xmin);
-                ry = buf.width / (ymax - ymin);
-
-                // The buffers x start and width is based upon the y-axis
-                sx = Math.max(0, Math.floor((view_ymin - ymin) * ry));
-                sw = Math.min(buf.width - sx, Math.ceil((view_ymax - view_ymin) * ry) + 1);
-                // The buffers y start and height is based upon the x-axis
-                sy = Math.max(0, Math.floor((view_xmin - xmin) * rx));
-                sh = Math.min(buf.height - sy, Math.ceil((view_xmax - view_xmin) * rx) + 1);
-
-                // Given the calculated buffer boundary, we need to figure out back in 
-                // plot coordinates where that is rendered in the view.  This is very confusing 
-                // because the start x related to ratio-y and ymin and vice versa
-                render_ymin = (sx / ry) + ymin;
-                render_ymax = ((sx + sw) / ry) + ymin;
-                render_xmin = (sy / rx) + xmin;
-                render_xmax = ((sy + sh) / rx) + xmin;
-
-                ul = mx.real_to_pixel(Mx, render_xmin, render_ymax);
-                lr = mx.real_to_pixel(Mx, render_xmax, render_ymin);
-            } else {
-                throw new RangeError(`Rotation angle ${rotationAngle} rad not supported. Must be -Math.PI/2.`);
-            }
+            ul = mx.real_to_pixel(Mx, view_xmin, view_ymax);
+            lr = mx.real_to_pixel(Mx, view_xmax, view_ymin);
         } else if (Mx.origin === 2) {
             // inverted x, regular y
             sy = Math.max(0, Math.floor((ymax - view_ymax) * ry));
-            sh = Math.min(buf.height - sy, Math.ceil((view_ymax - view_ymin) * ry) + 1);
-            sx = Math.max(0, Math.floor((view_xmax - xmax) * rx));
+            sh = Math.min(buf.height - sy, Math.floor((view_ymax - view_ymin) * ry));
+            sx = Math.max(0, Math.ceil((view_xmin - xmin) * rx));
             sw = Math.min(buf.width - sx, Math.floor((view_xmax - view_xmin) * rx));
 
-            render_xmin = xmax - ((sx + sw) / rx);
-            render_xmax = xmax - (sx / rx);
-            render_ymin = ymax - ((sy + sh) / ry);
-            render_ymax = ymax - (sy / ry);
-
-            ul = mx.real_to_pixel(Mx, render_xmax, render_ymax);
-            lr = mx.real_to_pixel(Mx, render_xmin, render_ymin);
+            ul = mx.real_to_pixel(Mx, view_xmax, view_ymax);
+            lr = mx.real_to_pixel(Mx, view_xmin, view_ymin);
         } else if (Mx.origin === 3) {
             // inverted x, inverted y
-            sy = Math.max(0, Math.floor((view_ymin - ymin) * ry));
-            sh = Math.min(buf.height - sy, Math.ceil((view_ymax - view_ymin) * ry) + 1);
-            sx = Math.max(0, Math.floor((view_xmax - xmax) * rx));
-            sw = Math.min(buf.width - sx, Math.ceil((view_xmax - view_xmin) * rx) + 1);
+            sy = Math.max(0, Math.ceil((view_ymin - ymin) * ry));
+            sh = Math.min(buf.height - sy, Math.floor((view_ymax - view_ymin) * ry));
+            sx = Math.max(0, Math.ceil((view_xmin - xmin) * rx));
+            sw = Math.min(buf.width - sx, Math.floor((view_xmax - view_xmin) * rx));
 
-            render_xmin = xmax - ((sx + sw) / rx);
-            render_xmax = xmax - (sx / rx);
-            render_ymin = (sy / ry) + ymin;
-            render_ymax = ((sy + sh) / ry) + ymin;
-
-            ul = mx.real_to_pixel(Mx, render_xmax, render_ymin);
-            lr = mx.real_to_pixel(Mx, render_xmin, render_ymax);
+            ul = mx.real_to_pixel(Mx, view_xmax, view_ymin);
+            lr = mx.real_to_pixel(Mx, view_xmin, view_ymax);
         } else if (Mx.origin === 4) {
             // regular x, inverted y
-            sy = Math.max(0, Math.floor((view_ymin - ymin) * ry));
-            sh = Math.min(buf.height - sy, Math.ceil((view_ymax - view_ymin) * ry) + 1);
+            sy = Math.max(0, Math.ceil((view_ymin - ymin) * ry));
+            sh = Math.min(buf.height - sy, Math.floor((view_ymax - view_ymin) * ry));
             sx = Math.max(0, Math.floor((view_xmin - xmin) * rx));
-            sw = Math.min(buf.width - sx, Math.ceil((view_xmax - view_xmin) * rx) + 1);
+            sw = Math.min(buf.width - sx, Math.floor((view_xmax - view_xmin) * rx));
 
-            render_xmin = (sx / rx) + xmin;
-            render_xmax = ((sx + sw) / rx) + xmin;
-            render_ymin = (sy / ry) + ymin;
-            render_ymax = ((sy + sh) / ry) + ymin;
-
-            ul = mx.real_to_pixel(Mx, render_xmin, render_ymin);
-            lr = mx.real_to_pixel(Mx, render_xmax, render_ymax);
+            ul = mx.real_to_pixel(Mx, view_xmin, view_ymin);
+            lr = mx.real_to_pixel(Mx, view_xmax, view_ymax);
         }
 
         var iw = lr.x - ul.x;
@@ -5893,20 +5665,7 @@
         ctx.beginPath();
         ctx.rect(Mx.l, Mx.t, Mx.r - Mx.l, Mx.b - Mx.t);
         ctx.clip();
-        renderImage(Mx, ctx, buf, opacity, downscaling, smoothing, ul.x, ul.y, iw, ih, sx, sy, sw, sh, rotationAngle);
-
-        if (strokeStyle) {
-            ctx.strokeStyle = strokeStyle;
-            ctx.strokeRect(ul.x, ul.y, iw, ih);
-        }
-        if (text) {
-            mx.text(Mx,
-                ul.x,
-                ul.y + Mx.text_h,
-                text,
-                Mx.fg
-            );
-        }
+        renderImage(Mx, ctx, buf, opacity, downscaling, smoothing, ul.x, ul.y, iw, ih, sx, sy, sw, sh);
         ctx.restore();
     };
 

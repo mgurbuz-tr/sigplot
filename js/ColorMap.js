@@ -111,17 +111,10 @@
                      }
                      colors[i] = newColor;
                  } else {
-                    if (color.red === undefined && color.green === undefined && color.blue === undefined) {
-                        //assume if it doesn't have rgb values it is a matplotlib style color map
-                        colors[i].red = Math.floor(Math.round(255 * color[0]));
-                        colors[i].green = Math.floor(Math.round(255 * color[1]));
-                        colors[i].blue = Math.floor(Math.round(255 * color[2]));
-                    } else {
-                        //assume if it has rgb values it is a percentage
-                        colors[i].red = Math.floor(Math.round(255 * (color.red / 100)));
-                        colors[i].green = Math.floor(Math.round(255 * (color.green / 100)));
-                        colors[i].blue = Math.floor(Math.round(255 * (color.blue / 100)));
-                    }
+                     //assume if it has rgb values it is a percentage
+                     colors[i].red = Math.floor(Math.round(255 * (color.red / 100)));
+                     colors[i].green = Math.floor(Math.round(255 * (color.green / 100)));
+                     colors[i].blue = Math.floor(Math.round(255 * (color.blue / 100)));
                  }
                  if (!colors[i].hasOwnProperty("alpha")) {
                      colors[i].alpha = this.options.alpha;

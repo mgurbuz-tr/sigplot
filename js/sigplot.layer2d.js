@@ -22,7 +22,7 @@
  * specific language governing permissions and limitations
  * under the License
  */
-
+ 
 /* global module */
 /* global require */
 
@@ -48,7 +48,6 @@
         this.xmax = 0.0;
         this.name = "";
         this.cx = false;
-        this.drawmode = "scrolling"; // "falling", "rising"
         this.hcb = undefined; // index in Gx.HCB
 
         this.display = true;
@@ -105,12 +104,8 @@
                 this.position = 0;
                 this.frame = 0;
 
-                if (this.drawdirection !== "horizontal") {
-                    this.lps = this.hcb.lps || Math.ceil(Math.max(1, (Mx.b - Mx.t)));
-                } else {
-                    this.lps = this.hcb.lps || Math.ceil(Math.max(1, (Mx.r - Mx.l)));
-                }
 
+                this.lps = this.hcb.lps || Math.ceil(Math.max(1, (Mx.b - Mx.t)));
                 m.addPipeWriteListener(this.hcb, function() {
                     self._onpipewrite();
                 });
@@ -121,6 +116,8 @@
             this.offset = 0;
             this.xbufn = 0;
             this.ybufn = 0;
+            this.drawmode = "scrolling"; // "falling", "rising"
+
 
             if (hcb["class"] <= 2) {
                 this.xsub = -1;
@@ -135,52 +132,26 @@
                 this.skip = 2;
             }
 
-            this.init_axes();
-        },
-
-        init_axes: function() {
-            var Gx = this.plot._Gx;
-            var Mx = this.plot._Mx;
-
             if (Gx.index) {
                 this.xstart = 1.0;
                 this.xdelta = 1.0;
                 this.xmin = 1.0;
-
+                this.xmax = hcb.subsize;
                 this.ystart = 1.0;
                 this.ydelta = 1.0;
                 this.ymin = 1.0;
-                if (this.drawdirection !== "horizontal") {
-                    this.xmax = this.hcb.subsize;
-                    this.ymax = this.size;
-                } else {
-                    this.xmax = this.size;
-                    this.ymax = this.hcb.subsize;
-                }
+                this.ymax = this.size;
             } else {
-                if (this.drawdirection !== "horizontal") {
-                    this.xstart = this.hcb.xstart;
-                    this.xdelta = this.hcb.xdelta;
-                    var d = this.hcb.xstart + (this.hcb.xdelta * this.hcb.subsize);
-                    this.xmin = this.hcb.xmin || Math.min(this.hcb.xstart, d);
-                    this.xmax = this.hcb.xmax || Math.max(this.hcb.xstart, d);
-                    this.ystart = this.hcb.ystart;
-                    this.ydelta = this.hcb.ydelta;
-                    var d = this.hcb.ystart + (this.hcb.ydelta * this.lps);
-                    this.ymin = this.hcb.ymin || Math.min(this.hcb.ystart, d);
-                    this.ymax = this.hcb.ymax || Math.max(this.hcb.ystart, d);
-                } else {
-                    this.ystart = this.hcb.xstart;
-                    this.ydelta = this.hcb.xdelta;
-                    var d = this.hcb.xstart + (this.hcb.xdelta * this.hcb.subsize);
-                    this.ymin = this.hcb.xmin || Math.min(this.hcb.xstart, d);
-                    this.ymax = this.hcb.xmax || Math.max(this.hcb.xstart, d);
-                    this.xstart = this.hcb.ystart;
-                    this.xdelta = this.hcb.ydelta;
-                    var d = this.hcb.ystart + (this.hcb.ydelta * this.lps);
-                    this.xmin = this.hcb.ymin || Math.min(this.hcb.ystart, d);
-                    this.xmax = this.hcb.ymax || Math.max(this.hcb.ystart, d);
-                }
+                this.xstart = hcb.xstart;
+                this.xdelta = hcb.xdelta;
+                var d = hcb.xstart + (hcb.xdelta * hcb.subsize);
+                this.xmin = this.hcb.xmin || Math.min(hcb.xstart, d);
+                this.xmax = this.hcb.xmax || Math.max(hcb.xstart, d);
+                this.ystart = hcb.ystart;
+                this.ydelta = hcb.ydelta;
+                var d = hcb.ystart + (hcb.ydelta * this.lps);
+                this.ymin = this.hcb.ymin || Math.min(hcb.ystart, d);
+                this.ymax = this.hcb.ymax || Math.max(hcb.ystart, d);
             }
 
             // TODO make this work with force 1000 applied
@@ -195,21 +166,9 @@
             }
             this.lpb = Math.max(1, this.lpb / this.yc) * this.yc;
 
-            if (this.drawdirection !== "horizontal") {
-                this.xlab = this.hcb.xunits;
-                this.ylab = this.hcb.yunits; // might be undefined
-            } else {
-                this.xlab = this.hcb.yunits;
-                this.ylab = this.hcb.xunits; // might be undefined
-            }
+            this.xlab = hcb.xunits;
+            this.ylab = hcb.yunits; // might be undefined
 
-            if ((this.drawmode === "falling" || this.drawdirection === "horizontal")) {
-                this.plot._Mx.origin = 1;
-                this.preferred_origin = 1;
-            } else {
-                this.plot._Mx.origin = 4;
-                this.preferred_origin = 4;
-            }
         },
 
         _onpipewrite: function() {
@@ -232,12 +191,12 @@
                     this.ymax = this.hcb.ystart;
                 }
 
-                if ((this.drawmode === "falling") && (this.drawdirection !== "horizontal")) {
+                if (this.drawmode === "falling") {
                     this.position = 0;
                     if (this.img) {
                         mx.shift_image_rows(Mx, this.img, 1);
                     }
-                } else if ((this.drawmode === "rising") && (this.drawdirection !== "horizontal")) {
+                } else if (this.drawmode === "rising") {
                     this.position = this.lps - 1;
                     if (this.img) {
                         mx.shift_image_rows(Mx, this.img, -1);
@@ -380,11 +339,7 @@
                 }
 
                 if (this.img) {
-                    if (this.drawdirection !== "horizontal") {
-                        mx.update_image_row(Mx, this.img, zpoint, this.position, Gx.zmin, Gx.zmax, this.xcompression);
-                    } else {
-                        mx.update_image_col(Mx, this.img, zpoint, this.position, Gx.zmin, Gx.zmax, this.xcompression);
-                    }
+                    mx.update_image_row(Mx, this.img, zpoint, this.position, Gx.zmin, Gx.zmax, this.xcompression);
                 }
                 this.frame += 1;
                 if (this.drawmode === "scrolling") {
@@ -460,17 +415,13 @@
                 (settings.autoz !== undefined)) {
                 this.img = undefined;
             }
-            if (settings.drawmode !== undefined) {
-                this.drawmode = settings.drawmode;
-            }
-            if (settings.drawdirection !== undefined) {
-                this.drawdirection = settings.drawdirection;
-            }
-            // There are a variety of settings, that when changed 
-            // require us to recompute the image and many internal settings
             if ((settings.drawmode !== undefined) || (settings.xmin !== undefined) ||
                 (settings.xmax !== undefined) || (settings.xdelta !== undefined) ||
-                (settings.xstart !== undefined) || (settings.drawdirection !== undefined)) {
+                (settings.xstart !== undefined)) {
+                if (settings.drawmode === undefined) {
+                    settings.drawmode = this.drawmode;
+                }
+                this.drawmode = settings.drawmode;
                 // Reset the buffer
                 this.position = 0;
                 this.frame = 0;
@@ -483,8 +434,13 @@
                 }
                 this.img = undefined;
 
-
-                this.init_axes();
+                if (this.drawmode === "falling") {
+                    this.plot._Mx.origin = 1;
+                    this.preferred_origin = 1;
+                } else {
+                    this.plot._Mx.origin = 4;
+                    this.preferred_origin = 4;
+                }
             }
             if (settings.opacity !== undefined) {
                 this.opacity = settings.opacity;
@@ -499,7 +455,7 @@
 
                 // If p_cuts are enabled from streams, we need to keep the entire zbuf in memory
                 if (this.hcb.pipe) {
-                    if (p_cuts) {
+                    if (!p_cuts) {
                         this.buf = this.hcb.createArray(null, 0, this.lps * this.hcb.subsize * this.hcb.spa);
                         this.zbuf = new m.PointArray(this.lps * this.hcb.subsize);
                     } else {
@@ -661,24 +617,6 @@
 
         },
 
-        get_pan_bounds: function(view) {
-            let prep = this.prep();
-
-            if (prep) {
-                return {
-                    num: prep.num,
-                    xmin: this.xmin,
-                    xmax: this.xmax,
-                    ymin: this.ymin,
-                    ymax: this.ymax
-                };
-            } else {
-                return {
-                    num: 0
-                };
-            }
-        },
-
         prep: function(xmin, xmax) {
             var Gx = this.plot._Gx;
             var Mx = this.plot._Mx;
@@ -693,14 +631,10 @@
 
             var xsize = this.hcb.subsize;
             if (this.xcompression > 0) {
-                if (this.drawdirection !== "horizontal") {
-                    xsize = Math.min(this.hcb.subsize, Math.ceil(Mx.r - Mx.l));
-                } else {
-                    xsize = Math.min(this.hcb.subsize, Math.ceil(Mx.t - Mx.b));
-                }
+                xsize = Math.min(this.hcb.subsize, Math.ceil(Mx.r - Mx.l));
             }
 
-            this.get_data();
+            this.get_data(xmin, xmax);
 
             if (!this.hcb.pipe) {
                 // if we aren't a pipe we do a full prep
@@ -727,6 +661,14 @@
                         m.log.debug("Nothing to plot");
                         npts = 0;
                     }
+                }
+
+                if (Gx.panxmin > Gx.panxmax) {
+                    Gx.panxmin = qmin;
+                    Gx.panxmax = qmax;
+                } else {
+                    Gx.panxmin = Math.min(Gx.panxmin, qmin);
+                    Gx.panxmax = Math.max(Gx.panxmax, qmax);
                 }
 
                 if (npts <= 0) {
@@ -756,6 +698,14 @@
                         m.log.debug("Nothing to plot");
                         npts = 0;
                     }
+                }
+
+                if (Gx.panymin > Gx.panymax) {
+                    Gx.panymin = this.ymin;
+                    Gx.panymax = this.ymax;
+                } else {
+                    Gx.panymin = Math.min(Gx.panymin, this.ymin);
+                    Gx.panymax = Math.max(Gx.panymax, this.ymax);
                 }
 
                 if (this.cx) {
@@ -847,8 +797,7 @@
                         this.lps,
                         Gx.zmin + Gx.zoff,
                         Gx.zmax + Gx.zoff,
-                        this.xcompression,
-                        this.drawdirection);
+                        this.xcompression);
                 } else {
                     // otherwise autol > 1
                     var nny = this.hcb.size;
@@ -862,8 +811,7 @@
                             xsize,
                             this.lps,
                             Gx.zmin + Gx.zoff,
-                            Gx.zmax + Gx.zoff,
-                            this.drawdirection);
+                            Gx.zmax + Gx.zoff);
                     }
 
                     Gx.zmin = 0;
@@ -899,6 +847,20 @@
                 }
             } else {
                 // Setup image for pipe-mode
+                if (Gx.panxmin > Gx.panxmax) {
+                    Gx.panxmin = qmin;
+                    Gx.panxmax = qmax;
+                } else {
+                    Gx.panxmin = Math.min(Gx.panxmin, qmin);
+                    Gx.panxmax = Math.max(Gx.panxmax, qmax);
+                }
+                if (Gx.panymin > Gx.panxmax) {
+                    Gx.panymin = this.ymin;
+                    Gx.panymax = this.ymax;
+                } else {
+                    Gx.panymin = Math.min(Gx.panymin, this.ymin);
+                    Gx.panymax = Math.max(Gx.panymax, this.ymax);
+                }
 
                 if (!this.img) {
                     if (Gx.zmin === undefined) {
@@ -914,8 +876,7 @@
                         this.lps,
                         Gx.zmin + Gx.zoff,
                         Gx.zmax + Gx.zoff,
-                        this.xcompression,
-                        this.drawdirection);
+                        this.xcompression);
                 }
             }
 
@@ -926,418 +887,18 @@
             // Make the parts without data transparent
             if (this.hcb.pipe && (this.frame < this.lps)) {
                 var imgd = new Uint32Array(this.img);
-                if (this.drawdirection !== "horizontal") {
-                    if (this.drawmode === "rising") {
-                        for (var i = 0; i < imgd.length - (this.frame * xsize); i++) {
-                            imgd[i] = 0;
-                        }
-                    } else {
-                        for (var i = this.frame * xsize; i < imgd.length; i++) {
-                            imgd[i] = 0;
-                        }
+                if (this.drawmode === "rising") {
+                    for (var i = 0; i < imgd.length - (this.frame * xsize); i++) {
+                        imgd[i] = 0;
                     }
                 } else {
-                    for (var j = this.frame; j < this.lps; j++) {
-                        for (var i = 0; i < this.img.height; i++) {
-                            imgd[(i * this.img.width) + j] = 0;
-                        }
+                    for (var i = this.frame * xsize; i < imgd.length; i++) {
+                        imgd[i] = 0;
                     }
                 }
             }
 
-            return {
-                num: npts,
-                panxmin: this.xmin,
-                panxmax: this.xmax,
-                panymin: this.ymin,
-                panymax: this.ymax
-            };
-        },
-
-        xCutData: function(ypos, zData) {
-            var Gx = this.plot._Gx;
-            var Mx = this.plot._Mx;
-            var height = this.lps;
-            var width = this.xframe;
-            var i;
-
-            // By default, pipe mode doesn't keep historical data
-            // around unless p_cuts has been turned on.
-            if (this.hcb.pipe && !Gx.p_cuts) {
-                return null;
-            }
-
-            var x_cut_data;
-            if (this.drawdirection !== "horizontal") {
-                var row;
-
-                if (!this.hcb.pipe) {
-                    row = Math.floor((ypos - this.ystart) / this.ydelta);
-                } else {
-                    row = Math.floor((height * (Mx.ypos - Mx.t)) / (Mx.b - Mx.t));
-                }
-                if ((row < 0) || (row > this.lps)) {
-                    return null;
-                }
-                var start = row * width;
-                var finish = start + width;
-                if (zData || this.hcb.pipe) {
-                    x_cut_data = this.zbuf.slice(start, finish);
-                } else {
-                    x_cut_data = this.buf.slice(start, finish);
-                }
-            } else {
-                x_cut_data = [];
-
-                var col = Math.round((ypos - this.ystart) / this.ydelta);
-                for (i = col; i < (width * height); i += width) {
-                    if (zData || this.hcb.pipe) {
-                        x_cut_data.push(this.zbuf[i]);
-                    } else {
-                        x_cut_data.push(this.buf[i]);
-                    }
-                }
-            }
-
-            return x_cut_data;
-        },
-
-        /**
-         * Display an xCut
-         *
-         * @param ypos
-         *     the y-position to extract the x-cut, leave undefined to
-         *     leave xCut
-         */
-        xCut: function(ypos) {
-            var Mx = this.plot._Mx;
-            var Gx = this.plot._Gx;
-
-            //display the x-cut of the raster
-            if (ypos !== undefined) {
-
-                // Stash important values
-                this.cut_stash = {};
-                this.cut_stash.ylabel = Gx.ylabel;
-                this.cut_stash.xlabel = Gx.xlabel;
-                this.cut_stash.level = Mx.level;
-                this.cut_stash.stk = JSON.parse(JSON.stringify(Mx.stk));
-                this.cut_stash.panymin = Gx.panymin;
-                this.cut_stash.panymax = Gx.panymax;
-                this.cut_stash.panxmin = Gx.panxmin;
-                this.cut_stash.panxmax = Gx.panxmax;
-
-                // Change Gx.lyr[0] to this.
-                var x_cut_data = this.xCutData(ypos);
-                if (!x_cut_data) {
-                    return;
-                }
-
-                //adjust for the values of the xcut
-                this.old_drawmode = this.drawmode;
-                this.old_autol = Gx.autol;
-                this.plot.change_settings({
-                    drawmode: "undefined",
-                    autol: -1
-                });
-
-                var cx = ((Gx.lyr.length > 0) && this.cx);
-                if (Gx.cmode === 1) {
-                    Gx.ylabel = m.UNITS[28][0];
-                } else if (Gx.cmode === 2) {
-                    Gx.ylabel = Gx.plab;
-                } else if ((Gx.cmode === 3) && (cx)) {
-                    Gx.ylabel = m.UNITS[21][0];
-                } else if (Gx.cmode === 4) {
-                    Gx.ylabel = m.UNITS[22][0];
-                } else if (Gx.cmode === 5) {
-                    Gx.ylabel = m.UNITS[22][0];
-                } else if (Gx.cmode === 6) {
-                    Gx.ylabel = m.UNITS[26][0];
-                } else if (Gx.cmode === 7) {
-                    Gx.ylabel = m.UNITS[27][0];
-                } else {
-                    Gx.ylabel = "Intensity";
-                }
-
-                if ((m.UNITS[Gx.xlab][0] !== "None") && (m.UNITS[Gx.xlab][0] !== "Unknown")) {
-                    Gx.xlabel = m.UNITS[Gx.xlab][0];
-                } else {
-                    Gx.xlabel = "Frequency";
-                }
-                Gx.xlabel += "    CURRENTLY IN X_CUT MODE";
-                Mx.origin = 1;
-
-                this.xcut_layer = this.plot.overlay_array(x_cut_data, {
-                    xstart: this.xstart,
-                    xdelta: this.xdelta
-                }, {
-                    name: "x_cut_data",
-                    line: 3
-                });
-
-                //do not display any other layers
-                var xcut_lyrn = this.plot.get_lyrn(this.xcut_layer);
-                for (var i = 0; i < Gx.lyr.length; i++) {
-                    if (i !== xcut_lyrn) {
-                        Gx.lyr[i].display = !Gx.lyr[i].display;
-                    }
-                }
-                Gx.x_cut_press_on = true;
-
-                // The y-axis is now the z-values
-                var mxmn = m.vmxmn(x_cut_data, this.xframe);
-                var ymax = mxmn.smax;
-                var ymin = mxmn.smin;
-                var yran = ymax - ymin;
-                if (yran < 0.0) {
-                    ymax = ymin;
-                    ymin = ymax + yran;
-                    yran = -yran;
-                }
-                if (yran <= 1.0e-20) {
-                    ymin = ymin - 1.0;
-                    ymax = ymax + 1.0;
-                } else {
-                    ymin = ymin - 0.02 * yran;
-                    ymax = ymax + 0.02 * yran;
-                }
-
-                Gx.panymin = mxmn.smin;
-                Gx.panymax = mxmn.smax;
-                for (var h = 1; h < Mx.level + 1; h++) {
-                    Mx.stk[h].ymin = ymin;
-                    Mx.stk[h].ymax = ymax;
-                    Mx.stk[h].yscl = (Mx.stk[h].ymax - Mx.stk[h].ymin) / (Mx.b - Mx.t);
-                }
-                this.plot.rescale();
-
-            } else if (Gx.x_cut_press_on) {
-                // ypos wasn't provided so turn x-cut off
-                Gx.x_cut_press_on = false;
-                for (var h = 0; h < Gx.lyr.length; h++) {
-                    if (h !== this.xcut_layer) {
-                        Gx.lyr[h].display = !Gx.lyr[h].display;
-                    }
-                    this.plot.deoverlay(this.xcut_layer);
-
-                    // Restore settings
-                    Gx.xlabel = this.cut_stash.xlabel;
-                    Gx.ylabel = this.cut_stash.ylabel;
-                    Mx.level = this.cut_stash.level;
-                    Mx.stk = JSON.parse(JSON.stringify(this.cut_stash.stk));
-                    Gx.panymin = this.cut_stash.panymin;
-                    Gx.panymax = this.cut_stash.panymax;
-                    Gx.panxmin = this.cut_stash.panxmin;
-                    Gx.panxmax = this.cut_stash.panxmax;
-                    this.cut_stash = undefined;
-
-
-                    this.plot.rescale();
-                    this.plot.refresh();
-                    this.xcut_layer = undefined;
-                    this.plot.change_settings({
-                        drawmode: this.old_drawmode,
-                        autol: this.old_autol
-                    });
-                }
-            }
-        },
-
-        yCutData: function(xpos, zData) {
-            var Gx = this.plot._Gx;
-            var Mx = this.plot._Mx;
-            var height = this.lps;
-            var width = this.xframe;
-            var i = 0;
-
-            // By default, pipe mode doesn't keep historical data
-            // around unless p_cuts has been turned on.
-            if (this.hcb.pipe && !Gx.p_cuts) {
-                return null;
-            }
-
-            var y_cut_data;
-            if (this.drawdirection !== "horizontal") {
-                y_cut_data = [];
-                var col;
-                if (!this.hcb.pipe || zData) {
-                    col = Math.floor((xpos - this.xstart) / this.xdelta);
-                    if (zData) {
-                        for (i = col; i < (width * height); i += width) {
-                            y_cut_data.push(this.zbuf[i]);
-                        }
-                    } else {
-                        for (i = col; i < (width * height); i += width) {
-                            y_cut_data.push(this.buf[i]);
-                        }
-                    }
-                } else {
-                    col = Math.floor((width * (Mx.xpos - Mx.l)) / (Mx.r - Mx.l));
-                    for (i = col; i < (width * height); i += width) {
-                        y_cut_data.push(this.zbuf[i]);
-                    }
-                }
-            } else {
-                var row = Math.round((xpos - this.xstart) / this.xdelta);
-                if ((row < 0) || (row > this.lps)) {
-                    return;
-                }
-                var start = row * width;
-                var finish = start + width;
-                if (!this.hcb.pipe || zData) {
-                    y_cut_data = this.zbuf.slice(start, finish);
-                } else {
-                    y_cut_data = this.buf.slice(start, finish);
-                }
-            }
-
-            return y_cut_data;
-        },
-
-        /**
-         * Display an yCut
-         *
-         * @param xpos
-         *     the x-position to extract the y-cut, leave undefined to
-         *     leave yCut
-         */
-        yCut: function(xpos) {
-            var Mx = this.plot._Mx;
-            var Gx = this.plot._Gx;
-
-            //display the y-cut of the raster
-            if (xpos !== undefined) {
-                // Stash important values
-                this.cut_stash = {};
-                this.cut_stash.xlabel = Gx.xlabel;
-                this.cut_stash.ylabel = Gx.ylabel;
-                this.cut_stash.level = Mx.level;
-                this.cut_stash.stk = JSON.parse(JSON.stringify(Mx.stk));
-                this.cut_stash.ymax = Mx.stk[Mx.level].ymax;
-                this.cut_stash.panymin = Gx.panymin;
-                this.cut_stash.panymax = Gx.panymax;
-                this.cut_stash.panxmin = Gx.panxmin;
-                this.cut_stash.panxmax = Gx.panxmax;
-
-                var y_cut_data = this.yCutData(xpos);
-
-                //adjust for the values of the xcut
-                this.old_drawmode = this.drawmode;
-                this.old_autol = Gx.autol;
-
-                this.plot.change_settings({
-                    drawmode: "undefined",
-                    autol: -1
-                });
-
-
-                var cx = ((Gx.lyr.length > 0) && this.cx);
-                if (Gx.cmode === 1) {
-                    Gx.ylabel = m.UNITS[28][0];
-                } else if (Gx.cmode === 2) {
-                    Gx.ylabel = Gx.plab;
-                } else if ((Gx.cmode === 3) && (cx)) {
-                    Gx.ylabel = m.UNITS[21][0];
-                } else if (Gx.cmode === 4) {
-                    Gx.ylabel = m.UNITS[22][0];
-                } else if (Gx.cmode === 5) {
-                    Gx.ylabel = m.UNITS[22][0];
-                } else if (Gx.cmode === 6) {
-                    Gx.ylabel = m.UNITS[26][0];
-                } else if (Gx.cmode === 7) {
-                    Gx.ylabel = m.UNITS[27][0];
-                } else {
-                    Gx.ylabel = "Intensity";
-                }
-
-                if ((m.UNITS[Gx.ylab][0] !== "None") && (m.UNITS[Gx.ylab][0] !== "Unknown")) {
-                    Gx.xlabel = m.UNITS[Gx.ylab][0];
-                } else {
-                    Gx.xlabel = "Time";
-                }
-                Gx.xlabel += "    CURRENTLY IN Y_CUT MODE";
-                Mx.origin = 1;
-                this.ycut_layer = this.plot.overlay_array(y_cut_data, {
-                    xstart: this.ystart,
-                    xdelta: this.ydelta
-                }, {
-                    name: "y_cut_data",
-                    line: 3
-                });
-
-
-                //do not display any other layers
-                var ycut_lyrn = this.plot.get_lyrn(this.ycut_layer);
-                for (var k = 0; k < Gx.lyr.length; k++) {
-                    if (k !== ycut_lyrn) {
-                        Gx.lyr[k].display = !Gx.lyr[k].display;
-                    }
-                }
-
-                Gx.y_cut_press_on = true;
-
-                // The y-axis is now the z-values
-                var mxmn = m.vmxmn(y_cut_data, this.lps);
-                var ymax = mxmn.smax;
-                var ymin = mxmn.smin;
-                var yran = ymax - ymin;
-                if (yran < 0.0) {
-                    ymax = ymin;
-                    ymin = ymax + yran;
-                    yran = -yran;
-                }
-                if (yran <= 1.0e-20) {
-                    ymin = ymin - 1.0;
-                    ymax = ymax + 1.0;
-                } else {
-                    ymin = ymin - 0.02 * yran;
-                    ymax = ymax + 0.02 * yran;
-                }
-
-                Gx.panymin = mxmn.smin;
-                Gx.panymax = mxmn.smax;
-                for (var h = 1; h < Mx.level + 1; h++) {
-                    // the x-axis is now the yvalues
-                    Mx.stk[h].xmin = Mx.stk[h].ymin;
-                    Mx.stk[h].xmax = Mx.stk[h].ymax;
-                    Mx.stk[h].xscl = (Mx.stk[h].xmax - Mx.stk[h].xmin) / (Mx.r - Mx.t);
-
-                    // the y-axis is now the zvalues
-                    Mx.stk[h].ymin = ymin;
-                    Mx.stk[h].ymax = ymax;
-                    Mx.stk[h].yscl = (Mx.stk[h].ymax - Mx.stk[h].ymin) / (Mx.b - Mx.t);
-                }
-
-                this.plot.rescale();
-            } else if (Gx.y_cut_press_on) {
-                Gx.y_cut_press_on = false;
-                for (var j = 0; j < Gx.lyr.length; j++) {
-                    if (j !== this.ycut_layer) {
-                        Gx.lyr[j].display = !Gx.lyr[j].display;
-                    }
-                    this.plot.deoverlay(this.ycut_layer);
-
-                    // Restore settings
-                    Gx.xlabel = this.cut_stash.xlabel;
-                    Gx.ylabel = this.cut_stash.ylabel;
-                    Mx.level = this.cut_stash.level;
-                    Mx.stk = JSON.parse(JSON.stringify(this.cut_stash.stk));
-                    Gx.panymin = this.cut_stash.panymin;
-                    Gx.panymax = this.cut_stash.panymax;
-                    Gx.panxmin = this.cut_stash.panxmin;
-                    Gx.panxmax = this.cut_stash.panxmax;
-                    this.cut_stash = undefined;
-
-                    this.plot.rescale();
-                    this.plot.refresh();
-                    this.ycut_layer = undefined;
-                    this.plot.change_settings({
-                        drawmode: this.old_drawmode,
-                        autol: this.old_autol
-                    });
-                }
-            }
+            return npts;
         },
 
         draw: function() {
@@ -1345,14 +906,8 @@
             var Gx = this.plot._Gx;
             var HCB = this.hcb;
 
-            if (this.hcb.pipe && this.img) {
-                var lps;
-                if (this.drawdirection !== "horizontal") {
-                    lps = this.hcb.lps || Math.ceil(Math.max(1, (Mx.b - Mx.t)));
-                } else {
-                    //lps = this.hcb.lps || Math.ceil(Math.max(1, (Mx.r - Mx.l)));
-                    lps = this.lps;
-                }
+            if (this.hcb.pipe) {
+                var lps = this.hcb.lps || Math.ceil(Math.max(1, (Mx.b - Mx.t)));
                 if ((lps !== this.lps) && this.buf) {
                     var lps_delta = (lps - this.lps);
                     this.lps = lps;
@@ -1362,12 +917,10 @@
 
                     if (this.drawmode === "scrolling") {
                         // in scrolling mode, ymin should never change
-                        if (this.drawdirection !== "horizontal") {
-                            var d = HCB.ystart + (HCB.ydelta * this.lps);
-                            this.ymin = Math.min(HCB.ystart, d);
-                            this.ymax = Math.max(HCB.ystart, d);
-                            this.img = mx.resize_image_height(Mx, this.img, this.lps);
-                        }
+                        var d = HCB.ystart + (HCB.ydelta * this.lps);
+                        this.ymin = Math.min(HCB.ystart, d);
+                        this.ymax = Math.max(HCB.ystart, d);
+                        this.img = mx.resize_image_height(Mx, this.img, this.lps);
                     } else if (this.drawmode === "falling") {
                         this.ymax = this.ymin + (HCB.ydelta * this.lps);
                         this.img = mx.resize_image_height(Mx, this.img, this.lps);
@@ -1433,17 +986,9 @@
 
             // render the scrolling pipe line
             if (this.position !== null && this.drawmode === "scrolling") {
-                var pnt;
-                if (this.drawdirection !== "horizontal") {
-                    pnt = mx.real_to_pixel(Mx, 0, this.position * this.ydelta);
-                    if ((pnt.y > Mx.t) && (pnt.y < Mx.b)) {
-                        mx.draw_line(Mx, "white", Mx.l, pnt.y, Mx.r, pnt.y);
-                    }
-                } else {
-                    pnt = mx.real_to_pixel(Mx, this.position * this.xdelta, 0);
-                    if ((pnt.x > Mx.l) && (pnt.x < Mx.r)) {
-                        mx.draw_line(Mx, "white", pnt.x, Mx.t, pnt.x, Mx.b);
-                    }
+                var pnt = mx.real_to_pixel(Mx, 0, this.position * this.ydelta);
+                if ((pnt.y > Mx.t) && (pnt.y < Mx.b)) {
+                    mx.draw_line(Mx, "white", Mx.l, pnt.y, Mx.r, pnt.y);
                 }
             }
         }
@@ -1476,12 +1021,6 @@
         }
 
         layer.change_settings(layerOptions);
-
-        for (var layerOption in layerOptions) {
-            if (layer[layerOption] !== undefined) {
-                layer[layerOption] = layerOptions[layerOption];
-            }
-        }
 
         var layers = [];
         if (plot.add_layer(layer)) {

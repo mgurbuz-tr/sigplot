@@ -103,10 +103,8 @@
          *      The plot the plugin is attahced to 
          *  @param canvas
          *      The canvas the plugin should render to
-         *  @param isListen
-         *      It checks for events to be listened while the plugin is being initialized.
          */
-        init(plot, canvas, isListen) {
+        init(plot, canvas,isListen) {
             if (this._plot) {
                 throw "Plugins can only be added to one plot at a time";
             }

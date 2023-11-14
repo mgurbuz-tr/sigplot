@@ -42,15 +42,6 @@
     var mx = require("./mx");
     var Layer1D = require("./sigplot.layer1d");
     var Layer2D = require("./sigplot.layer2d");
-    var Layer1DSDS = require("./sigplot.layer1dSDS");
-    var Layer2DSDS = require("./sigplot.layer2dSDS");
-    var Plugin = require("./sigplot.plugin");
-    var AccordionPlugin = require("./sigplot.accordion");
-    var AnnotationPlugin = require("./sigplot.annotations");
-    var BoxesPlugin = require("./sigplot.boxes");
-    var PlaybackControlsPlugin = require("./sigplot.playback");
-    var SliderPlugin = require("./sigplot.slider");
-
 
     function sigplot(element, options) {
         if (!(this instanceof sigplot)) {
@@ -494,8 +485,6 @@
                     plot.refresh();
                 }
 
-                Gx.mouseClickActive = true;
-
                 // Update Mx event fields
                 mx.ifevent(Mx, event);
 
@@ -715,15 +704,7 @@
                         }
                     } else if (event.which === 2) {
                         if (!Gx.nomenu) {
-                            var evt = document.createEvent('Event');
-                            evt.initEvent('showmenu', true, true);
-                            evt.originalEvent = event;
-                            evt.x = Mx.x;
-                            evt.y = Mx.y;
-                            var executeDefault = mx.dispatchEvent(Mx, evt);
-                            if (executeDefault) {
-                                sigplot_mainmenu(plot);
-                            }
+                            sigplot_mainmenu(plot);
                         }
                     }
                 }
@@ -933,24 +914,6 @@
                     window.clearInterval(Gx.repeatPanning);
                     Gx.repeatPanning = undefined;
                 }
-
-                // Update Mx event fields
-                mx.ifevent(plot._Mx, event);
-
-                if ((Mx.mouseOver === false) && (Gx.mouseClickActive)) {
-                    var evt = document.createEvent('Event');
-                    evt.initEvent('mup', true, true);
-                    evt.originalEvent = event;
-                    // xpos/ypos/x/y are clipped 
-                    evt.xpos = Mx.xpos;
-                    evt.ypos = Mx.ypos;
-                    evt.x = Gx.retx;
-                    evt.y = Gx.rety;
-                    evt.which = event.which;
-                    var executeDefault = mx.dispatchEvent(Mx, evt);
-                }
-
-                Gx.mouseClickActive = false;
                 return false;
             };
         }(this));
@@ -1009,17 +972,7 @@
                             mtagevt.w = undefined;
                             mtagevt.h = undefined;
                             mtagevt.shift = event.shiftKey;
-                            if (mx.dispatchEvent(Mx, mtagevt)) {
-                                var mclkevt = document.createEvent('Event');
-                                mclkevt.initEvent('mclick', true, true);
-                                mclkevt.originalEvent = event;
-                                mclkevt.xpos = mtagevt.xpos;
-                                mclkevt.ypos = mtagevt.ypos;
-                                mclkevt.x = mtagevt.x;
-                                mclkevt.y = mtagevt.y;
-                                mclkevt.which = 1;
-                                mx.dispatchEvent(Mx, mclkevt);
-                            }
+                            mx.dispatchEvent(Mx, mtagevt);
 
                             // Refresh to draw the new marker position
                             //if (Gx.always_show_marker || Gx.show_marker) {
@@ -1083,6 +1036,17 @@
                 // Update Mx event fields
                 mx.ifevent(plot._Mx, event);
 
+                var evt = document.createEvent('Event');
+                evt.initEvent('mclick', true, true);
+                evt.originalEvent = event;
+                evt.xpos = Mx.xpos;
+                evt.ypos = Mx.ypos;
+                evt.x = Gx.retx;
+                evt.y = Gx.rety;
+                evt.which = event.which; // not always available on all browser
+                if (mx.dispatchEvent(Mx, evt)) {
+                    // currently there isn't a default for mouseclick to cancel
+                }
                 return false;
             };
         }(this));
@@ -1380,12 +1344,7 @@
                         } else if (keyCode === 120) { // 'x'
                             if (Gx.x_cut_press_on) {
                                 // leave xCut
-                                for (var i = 0; i < Gx.lyr.length; i++) {
-                                    if (Gx.lyr[i].xCut) {
-                                        Gx.lyr[i].xCut();
-                                        break;
-                                    }
-                                }
+                                plot.xCut();
                             } else if (Gx.xyKeys === "pop-up") {
                                 if (!Gx.x_pop_now) {
                                     sigplot_show_x(plot);
@@ -1405,22 +1364,12 @@
                                 // type 2000 and y-cut isn't currently enabled (we already checked
                                 // that x_cut above)
                                 if (!Gx.y_cut_press_on) {
-                                    for (var i = 0; i < Gx.lyr.length; i++) {
-                                        if (Gx.lyr[i].xCut) {
-                                            Gx.lyr[i].xCut(pixel_to_real(plot, 0, Mx.ypos).y);
-                                            break;
-                                        }
-                                    }
+                                    plot.xCut(pixel_to_real(plot, 0, Mx.ypos).y);
                                 }
                             }
                         } else if (keyCode === 121) { // 'y'
                             if (Gx.y_cut_press_on) {
-                                for (var i = 0; i < Gx.lyr.length; i++) {
-                                    if (Gx.lyr[i].yCut) {
-                                        Gx.lyr[i].yCut();
-                                        break;
-                                    }
-                                }
+                                plot.yCut();
                             } else if (Gx.xyKeys === "pop-up") {
                                 if (!Gx.y_pop_now) {
                                     sigplot_show_y(plot);
@@ -1440,12 +1389,7 @@
                                 // type 2000 and y-cut isn't currently enabled (we already checked
                                 // that y_cut above)
                                 if (!Gx.x_cut_press_on) {
-                                    for (var i = 0; i < Gx.lyr.length; i++) {
-                                        if (Gx.lyr[i].yCut) {
-                                            Gx.lyr[i].yCut(pixel_to_real(plot, Mx.xpos, 0).x);
-                                            break;
-                                        }
-                                    }
+                                    plot.yCut(pixel_to_real(plot, Mx.xpos, 0).x);
                                 }
                             }
                         } else if (keyCode === 122) { // 'z'
@@ -1503,7 +1447,7 @@
          *            the zorder for the plugin to render, all plugins render as
          *            overlays on top of the plot
          */
-        add_plugin: function(plugin, zorder) {
+        add_plugin: function(plugin, zorder,isListen) {
             if (zorder === undefined) {
                 zorder = Number.MAX_VALUE;
             }
@@ -1515,7 +1459,7 @@
             canvas.width = this._Mx.canvas.width;
             canvas.height = this._Mx.canvas.height;
 
-            plugin.init(this, canvas);
+            plugin.init(this, canvas,isListen);
 
             this._Gx.plugins.push({
                 impl: plugin,
@@ -1703,7 +1647,7 @@
          *            settings.phunits The phase units "D" = Degrees, "R" = Radians,
          *            "C" = Cycles
          *
-         * @param {Boolean}
+         * @ param {Boolean}
          *            settings.lg_colorbar true displays the large colorbar
          *
          * @param {Boolean}
@@ -1927,7 +1871,7 @@
                     (cmode === "ABRI") || (cmode === "ABIR") || (cmode === "__RI") ||
                     (cmode === "__IR") || (cmode === "IMAG/REAL") || (cmode === "REAL/IMAG") || (cmode === 5)) {
                     if (Gx.index) {
-                        m.log.error("Imag/Real mode not permitted in INDEX mode");
+                        alert("Imag/Real mode not permitted in INDEX mode");
                     } else {
                         cmode = 5;
                     }
@@ -2450,7 +2394,7 @@
                 overrides = {};
             }
             overrides.pipe = true;
-            var hcb = m.initialize(null, overrides, () => ws.close());
+            var hcb = m.initialize(null, overrides);
             hcb.ws = ws;
 
             var layer_n = this.overlay_bluefile(hcb, layerOptions);
@@ -2557,7 +2501,6 @@
                             if (wpipe.layer_n !== null) {
                                 plot.remove_layer(wpipe.layer_n);
                                 wpipe.layer_n = null;
-                                wpipe.lyr = null;
                             }
 
                             var bufferLayerOptions = {
@@ -2575,17 +2518,10 @@
 
                             wpipe.hcb.pipe = true;
                             try {
-                                wpipe.hcb = m.initialize(null, wpipe.hcb, () => wpipe.ws.close());
+                                wpipe.hcb = m.initialize(null, wpipe.hcb);
                                 wpipe.layer_n = plot.overlay_bluefile(wpipe.hcb, wpipe.plotLayerOptions);
-                                wpipe.lyr = plot.get_layer(wpipe.layer_n);
                             } catch (e) {
                                 wpipe.ws.close();
-                                if (wpipe.layer_n !== null) {
-                                    plot.remove_layer(wpipe.layer_n);
-                                    wpipe.layer_n = null;
-                                    wpipe.lyr = null;
-                                }
-                                wpipe.lyr = null;
                             }
                         } else if (msg.event === "error") {
                             m.log.error(msg);
@@ -2593,9 +2529,9 @@
                             wpipe.ws.close();
                             return;
                         } else if (msg.event === "abscissa_update") {
-                            if (wpipe.lyr instanceof Layer1D) {
+                            if (wpipe.plotLayerOptions.layerType === Layer1D) {
                                 wpipe.hcb.xstart += msg.payload.skip_count * wpipe.hcb.xdelta;
-                            } else if (wpipe.lyr instanceof Layer2D) {
+                            } else if (wpipe.plotLayerOptions.layerType === Layer2D) {
                                 wpipe.hcb.ystart += msg.payload.skip_count * wpipe.hcb.ydelta;
                             }
                         } else {
@@ -2603,10 +2539,10 @@
                             wpipe.ws.close();
                         }
                     } else {
-                        if (wpipe.lyr instanceof Layer1D) {
+                        if (wpipe.plotLayerOptions.layerType === Layer1D) {
                             var array = wpipe.hcb.createArray(evt.data);
                             plot.push(wpipe.layer_n, array);
-                        } else if (wpipe.lyr instanceof Layer2D) {
+                        } else if (wpipe.plotLayerOptions.layerType === Layer2D) {
                             var numFrames = evt.data.byteLength / wpipe.hcb.bpe;
                             for (var i = 0; i < numFrames; ++i) {
                                 var offset = i * wpipe.hcb.bpe;
@@ -2649,11 +2585,11 @@
          * @returns data_layer
          *
          */
-        overlay_href: function(href, onload, layerOptions, overrides) {
+        overlay_href: function(href, onload, layerOptions) {
             var self = this;
             var lyr_uuids = [];
             href.split('|').forEach(function(hr) {
-                var lyr_uuid = self.overlay_href_single(hr.trim(), onload, layerOptions, overrides);
+                var lyr_uuid = self.overlay_href_single(hr.trim(), onload, layerOptions);
                 lyr_uuids.push(lyr_uuid);
             });
 
@@ -2692,21 +2628,20 @@
          * @returns data_layer
          *
          */
-        overlay_href_single: function(href, onload, layerOptions, overrides) {
+        overlay_href_single: function(href, onload, layerOptions) {
             var lyr_uuid = this.reg_hcb(null);
 
             m.log.debug("Overlay href: " + href + " " + lyr_uuid);
             try {
                 this.show_spinner();
+
                 var handleHeader = (function(plot, onload) {
                     return function(hcb) {
                         try {
                             if (!hcb) {
-                                m.log.error("Failed to load data: " + href);
+                                alert("Failed to load data");
                             } else {
                                 hcb._uuid = lyr_uuid;
-                                common.update(hcb, overrides);
-
                                 var i;
                                 if (href.endsWith(".mat")) {
                                     i = plot.overlay_matfile(hcb, layerOptions);
@@ -2723,69 +2658,17 @@
                     };
                 }(this, onload));
 
-                var handleSDS = (function(plot, onload) {
-                    return function(hcb, layertype) {
-                        // LOWER CASE CRAP THAT GRANT SENT US
-                        try {
-                            var i = null;
-                            if (!hcb) {
-                                m.log.error("Failed to load data: " + href);
-                            } else {
-                                hcb._uuid = lyr_uuid;
-                                common.update(hcb, overrides);
-                                if (layertype === "SDS") {
-                                    if (hcb.file_type === 1000) {
-                                        layerOptions.layerType = "1DSDS";
-                                    } else {
-                                        layerOptions.layerType = "2DSDS";
-                                    }
-                                } else {
-                                    layerOptions.layerType = layertype;
-                                }
-
-                                i = plot.overlay_bluefile(hcb, layerOptions);
-                                if (onload) {
-                                    onload(hcb, i);
-                                }
-                            }
-                        } finally {
-                            plot.hide_spinner();
-                        }
-                    };
-                }(this, onload));
-
                 var reader;
                 var oReq;
                 if (href.endsWith(".mat")) {
                     reader = new matfile.MatFileReader();
                     oReq = reader.read_http(href, handleHeader);
-                } else if (layerOptions && (layerOptions.layerType === "2DSDS" || layerOptions.layerType === "1DSDS" || layerOptions.layerType === "SDS")) {
-                    // TODO it would be nice to not check layerType here but either
-                    // peek at the URL contents OR use something in the URL
-                    oReq = new XMLHttpRequest();
-                    oReq.open("GET", href, true);
-                    oReq.responseType = "";
-                    oReq.onload = function(oEvent) {
-                        var hcb = JSON.parse(oReq.responseText);
-                        if (hcb) {
-                            hcb.url = href;
-                        }
-                        handleSDS(hcb, layerOptions.layerType);
-
-                    };
-                    oReq.onerror = function(oEvent) {
-                        //console.log("error fetching SDS header" + oEvent)
-                    };
-                    oReq.send(null);
                 } else {
                     reader = new bluefile.BlueFileReader();
                     oReq = reader.read_http(href, handleHeader);
                 }
-
-                // If oReq exists, set the HCB destructor to oReq.abort()
                 if (oReq) {
-                    const layer_n = this.get_layer_n(lyr_uuid);
-                    this._Gx.HCB[layer_n].cleanup = () => oReq.abort();
+                    this._Gx.HCB_RDR[lyr_uuid] = oReq;
                 }
             } catch (error) {
                 this.hide_spinner();
@@ -2915,6 +2798,8 @@
                 }
                 // Update the HCB
                 Gx.HCB_UUID[lyr_uuid] = hcb;
+                // Remove the req
+                delete Gx.HCB_RDR[lyr_uuid];
             } else {
                 lyr_uuid = this.reg_hcb(hcb);
             }
@@ -2937,10 +2822,6 @@
                     layers = Layer1D.overlay(this, hcb, layerOptions);
                 } else if (layerOptions.layerType === "2D") {
                     layers = Layer2D.overlay(this, hcb, layerOptions);
-                } else if (layerOptions.layerType === "1DSDS") {
-                    layers = Layer1DSDS.overlay(this, hcb, layerOptions);
-                } else if (layerOptions.layerType === "2DSDS") {
-                    layers = Layer2DSDS.overlay(this, hcb, layerOptions);
                 } else {
                     layers = layerOptions.layerType.overlay(this, hcb, layerOptions);
                 }
@@ -3086,7 +2967,7 @@
         /**
          * Remove a layer.
          *
-         * @param lyr_uuid
+         * @param index
          *            the layer to remove
          */
         remove_layer: function(lyr_uuid) {
@@ -3094,12 +2975,10 @@
 
             var HCB = Gx.HCB_UUID[lyr_uuid];
             delete Gx.HCB_UUID[lyr_uuid];
-
-            // This will also return false if
-            // `cleanup` is not defined.
-            if (HCB && _.isFunction(HCB.cleanup)) {
-                HCB.cleanup();
+            if (_.has(Gx.HCB_RDR, lyr_uuid)) {
+                Gx.HCB_RDR[lyr_uuid].abort();
             }
+            delete Gx.HCB_RDR[lyr_uuid];
 
             var fileName = "";
             if (HCB) {
@@ -3327,94 +3206,6 @@
             this.inZoom = false;
 
             this.refresh();
-        },
-
-        /**
-         * Expand pan-bars to the full range
-         */
-        expand_full: function(xpan, ypan) {
-            if (xpan) {
-                updateViewbox(this, this._Gx.panxmin, this._Gx.panxmax, "X");
-                // syncronous refresh is necessary, because expanding the xrange
-                // may cause more data to be read
-                this._refresh();
-            }
-
-            if (ypan) {
-                updateViewbox(this, this._Gx.panymin, this._Gx.panymax, "Y");
-            }
-
-            // async refresh is find here
-            this.refresh();
-        },
-
-        /**
-         * Set the current view bounds, if any bounds are not defined
-         * then they are kept as currently set.
-         * 
-         * Will call an asyncronous refresh() after the new view box
-         * values have been set.
-         * 
-         * @param {Object} ViewBounds 
-         * @returns {number} ViewBounds.xmin
-         *     the abscissa X minimum value of the view box
-         * @returns {number} ViewBounds.xmax
-         *     the abscissa X maximum value of the view box
-         * @returns {number} ViewBounds.ymin
-         *     the abscissa Y minimum value of the view box
-         * @returns {number} ViewBounds.ymax
-         *     the abscissa Y maximum value of the view box
-         */
-        set_view: function({
-            xmin,
-            xmax,
-            ymin,
-            ymax
-        }) {
-            var Mx = this._Mx;
-            var Gx = this._Gx;
-            var k = Mx.level;
-
-            if (xmin !== undefined) {
-                Mx.stk[k].xmin = xmin;
-            }
-            if (xmax !== undefined) {
-                Mx.stk[k].xmax = xmax;
-            }
-            if (ymin !== undefined) {
-                Mx.stk[k].ymin = ymin;
-            }
-            if (ymax !== undefined) {
-                Mx.stk[k].ymax = ymax;
-            }
-            this.refresh();
-        },
-
-        /**
-         * Get the current view bounds
-         * 
-         * @returns {Object} ViewBounds
-         *     the view bounds
-         * @returns {number} ViewBounds.xmin
-         *     the abscissa X minimum value of the view box
-         * @returns {number} ViewBounds.xmax
-         *     the abscissa X maximum value of the view box
-         * @returns {number} ViewBounds.ymin
-         *     the abscissa Y minimum value of the view box
-         * @returns {number} ViewBounds.ymax
-         *     the abscissa Y maximum value of the view box
-         */
-        get_view: function() {
-            var Mx = this._Mx;
-            var Gx = this._Gx;
-            var k = Mx.level;
-
-            return {
-                xmin: Mx.stk[k].xmin,
-                xmax: Mx.stk[k].xmax,
-                ymin: Mx.stk[k].ymin,
-                ymax: Mx.stk[k].ymax
-            };
         },
 
         /**
@@ -3718,6 +3509,294 @@
 
         },
 
+        /**
+         * Display an xCut
+         *
+         * @param ypos
+         *     the y-position to extract the x-cut, leave undefined to
+         *     leave xCut
+         */
+        xCut: function(ypos) {
+            var Gx = this._Gx;
+            var Mx = this._Mx;
+
+            //display the x-cut of the raster
+            if (ypos !== undefined) {
+
+                // Stash important values
+                Gx.cut_stash = {};
+                Gx.cut_stash.ylabel = Gx.ylabel;
+                Gx.cut_stash.xlabel = Gx.xlabel;
+                Gx.cut_stash.level = Mx.level;
+                Gx.cut_stash.stk = JSON.parse(JSON.stringify(Mx.stk));
+                Gx.cut_stash.panymin = Gx.panymin;
+                Gx.cut_stash.panymax = Gx.panymax;
+                Gx.cut_stash.panxmin = Gx.panxmin;
+                Gx.cut_stash.panxmax = Gx.panxmax;
+
+                if (!Gx.p_cuts) {
+                    Gx.x_cut_data = [];
+                    var width = Gx.lyr[0].xframe;
+                    var row = Math.round((ypos - Gx.lyr[0].ystart) / Gx.lyr[0].ydelta);
+                    if ((row < 0) || (row > Gx.lyr[0].lps)) {
+                        return;
+                    }
+                    var start = row * width;
+                    var finish = start + width;
+                    Gx.x_cut_data = Gx.lyr[0].buf.slice(start, finish);
+                }
+
+                //adjust for the values of the xcut
+                Gx.old_drawmode = Gx.lyr[0].drawmode;
+                Gx.old_autol = Gx.autol;
+                this.change_settings({
+                    drawmode: "undefined",
+                    autol: -1
+                });
+
+                var cx = ((Gx.lyr.length > 0) && Gx.lyr[0].cx);
+                if (Gx.cmode === 1) {
+                    Gx.ylabel = m.UNITS[28][0];
+                } else if (Gx.cmode === 2) {
+                    Gx.ylabel = Gx.plab;
+                } else if ((Gx.cmode === 3) && (cx)) {
+                    Gx.ylabel = m.UNITS[21][0];
+                } else if (Gx.cmode === 4) {
+                    Gx.ylabel = m.UNITS[22][0];
+                } else if (Gx.cmode === 5) {
+                    Gx.ylabel = m.UNITS[22][0];
+                } else if (Gx.cmode === 6) {
+                    Gx.ylabel = m.UNITS[26][0];
+                } else if (Gx.cmode === 7) {
+                    Gx.ylabel = m.UNITS[27][0];
+                } else {
+                    Gx.ylabel = "Intensity";
+                }
+
+                if ((m.UNITS[Gx.xlab][0] !== "None") && (m.UNITS[Gx.xlab][0] !== "Unknown")) {
+                    Gx.xlabel = m.UNITS[Gx.xlab][0];
+                } else {
+                    Gx.xlabel = "Frequency";
+                }
+                Gx.xlabel += "    CURRENTLY IN X_CUT MODE";
+                Mx.origin = 1;
+                Gx.xcut_layer = this.overlay_array(Gx.x_cut_data, {
+                    xstart: Gx.lyr[0].xstart,
+                    xdelta: Gx.lyr[0].xdelta
+                }, {
+                    name: "x_cut_data",
+                    line: 3
+                });
+                Gx.xcut_layer = Gx.lyr.length - 1;
+                //do not display any other layers
+                for (var i = 0; i < Gx.xcut_layer; i++) {
+                    Gx.lyr[i].display = !Gx.lyr[i].display;
+                }
+                Gx.x_cut_press_on = true;
+
+                // The y-axis is now the z-values
+                var mxmn = m.vmxmn(Gx.x_cut_data, Gx.lyr[0].xframe);
+                var ymax = mxmn.smax;
+                var ymin = mxmn.smin;
+                var yran = ymax - ymin;
+                if (yran < 0.0) {
+                    ymax = ymin;
+                    ymin = ymax + yran;
+                    yran = -yran;
+                }
+                if (yran <= 1.0e-20) {
+                    ymin = ymin - 1.0;
+                    ymax = ymax + 1.0;
+                } else {
+                    ymin = ymin - 0.02 * yran;
+                    ymax = ymax + 0.02 * yran;
+                }
+
+                Gx.panymin = mxmn.smin;
+                Gx.panymax = mxmn.smax;
+                for (var h = 1; h < Mx.level + 1; h++) {
+                    Mx.stk[h].ymin = ymin;
+                    Mx.stk[h].ymax = ymax;
+                    Mx.stk[h].yscl = (Mx.stk[h].ymax - Mx.stk[h].ymin) / (Mx.b - Mx.t);
+                }
+                this.rescale();
+
+            } else if (Gx.x_cut_press_on) {
+                // ypos wasn't provided so turn x-cut off
+                Gx.x_cut_press_on = false;
+                for (var h = 0; h < Gx.xcut_layer; h++) {
+                    Gx.lyr[h].display = !Gx.lyr[h].display;
+                }
+                delete_layer(this, Gx.xcut_layer);
+
+                // Restore settings
+                Gx.xlabel = Gx.cut_stash.xlabel;
+                Gx.ylabel = Gx.cut_stash.ylabel;
+                Mx.level = Gx.cut_stash.level;
+                Mx.stk = JSON.parse(JSON.stringify(Gx.cut_stash.stk));
+                Gx.panymin = Gx.cut_stash.panymin;
+                Gx.panymax = Gx.cut_stash.panymax;
+                Gx.panxmin = Gx.cut_stash.panxmin;
+                Gx.panxmax = Gx.cut_stash.panxmax;
+                Gx.cut_stash = undefined;
+
+                this.rescale();
+                this.refresh();
+                Gx.xcut_layer = undefined;
+                this.change_settings({
+                    drawmode: Gx.old_drawmode,
+                    autol: Gx.old_autol
+                });
+            }
+        },
+
+        /**
+         * Display an yCut
+         *
+         * @param xpos
+         *     the x-position to extract the y-cut, leave undefined to
+         *     leave yCut
+         */
+        yCut: function(xpos) {
+            var Gx = this._Gx;
+            var Mx = this._Mx;
+
+            //display the y-cut of the raster
+            if (xpos !== undefined) {
+                // Stash important values
+                Gx.cut_stash = {};
+                Gx.cut_stash.xlabel = Gx.xlabel;
+                Gx.cut_stash.ylabel = Gx.ylabel;
+                Gx.cut_stash.level = Mx.level;
+                Gx.cut_stash.stk = JSON.parse(JSON.stringify(Mx.stk));
+                Gx.cut_stash.ymax = Mx.stk[Mx.level].ymax;
+                Gx.cut_stash.panymin = Gx.panymin;
+                Gx.cut_stash.panymax = Gx.panymax;
+                Gx.cut_stash.panxmin = Gx.panxmin;
+                Gx.cut_stash.panxmax = Gx.panxmax;
+
+                if (!Gx.p_cuts) {
+                    var height = Gx.lyr[0].lps;
+                    var width = Gx.lyr[0].xframe;
+                    var i = 0;
+
+                    Gx.y_cut_data = [];
+                    var col = Math.round((xpos - Gx.lyr[0].xstart) / Gx.lyr[0].xdelta);
+                    for (i = col; i < (width * height); i += width) {
+                        Gx.y_cut_data.push(Gx.lyr[0].buf[i]);
+                    }
+                }
+
+                //adjust for the values of the xcut
+                Gx.old_drawmode = Gx.lyr[0].drawmode;
+                Gx.old_autol = Gx.autol;
+                this.change_settings({
+                    drawmode: "undefined",
+                    autol: -1
+                });
+
+
+                var cx = ((Gx.lyr.length > 0) && Gx.lyr[0].cx);
+                if (Gx.cmode === 1) {
+                    Gx.ylabel = m.UNITS[28][0];
+                } else if (Gx.cmode === 2) {
+                    Gx.ylabel = Gx.plab;
+                } else if ((Gx.cmode === 3) && (cx)) {
+                    Gx.ylabel = m.UNITS[21][0];
+                } else if (Gx.cmode === 4) {
+                    Gx.ylabel = m.UNITS[22][0];
+                } else if (Gx.cmode === 5) {
+                    Gx.ylabel = m.UNITS[22][0];
+                } else if (Gx.cmode === 6) {
+                    Gx.ylabel = m.UNITS[26][0];
+                } else if (Gx.cmode === 7) {
+                    Gx.ylabel = m.UNITS[27][0];
+                } else {
+                    Gx.ylabel = "Intensity";
+                }
+
+                if ((m.UNITS[Gx.ylab][0] !== "None") && (m.UNITS[Gx.ylab][0] !== "Unknown")) {
+                    Gx.xlabel = m.UNITS[Gx.ylab][0];
+                } else {
+                    Gx.xlabel = "Time";
+                }
+                Gx.xlabel += "    CURRENTLY IN Y_CUT MODE";
+                Mx.origin = 1;
+                Gx.ycut_layer = this.overlay_array(Gx.y_cut_data, {
+                    xstart: Gx.lyr[0].ystart,
+                    xdelta: Gx.lyr[0].ydelta
+                }, {
+                    name: "y_cut_data",
+                    line: 3
+                });
+                Gx.ycut_layer = Gx.lyr.length - 1;
+                //do not display any other layers
+                for (var k = 0; k < Gx.ycut_layer; k++) {
+                    Gx.lyr[k].display = !Gx.lyr[k].display;
+                }
+                Gx.y_cut_press_on = true;
+
+                // The y-axis is now the z-values
+                var mxmn = m.vmxmn(Gx.y_cut_data, Gx.lyr[0].lps);
+                var ymax = mxmn.smax;
+                var ymin = mxmn.smin;
+                var yran = ymax - ymin;
+                if (yran < 0.0) {
+                    ymax = ymin;
+                    ymin = ymax + yran;
+                    yran = -yran;
+                }
+                if (yran <= 1.0e-20) {
+                    ymin = ymin - 1.0;
+                    ymax = ymax + 1.0;
+                } else {
+                    ymin = ymin - 0.02 * yran;
+                    ymax = ymax + 0.02 * yran;
+                }
+
+                Gx.panymin = mxmn.smin;
+                Gx.panymax = mxmn.smax;
+                for (var h = 1; h < Mx.level + 1; h++) {
+                    // the x-axis is now the yvalues
+                    Mx.stk[h].xmin = Mx.stk[h].ymin;
+                    Mx.stk[h].xmax = Mx.stk[h].ymax;
+                    Mx.stk[h].xscl = (Mx.stk[h].xmax - Mx.stk[h].xmin) / (Mx.r - Mx.t);
+
+                    // the y-axis is now the zvalues
+                    Mx.stk[h].ymin = ymin;
+                    Mx.stk[h].ymax = ymax;
+                    Mx.stk[h].yscl = (Mx.stk[h].ymax - Mx.stk[h].ymin) / (Mx.b - Mx.t);
+                }
+
+                this.rescale();
+            } else if (Gx.y_cut_press_on) {
+                Gx.y_cut_press_on = false;
+                for (var j = 0; j < Gx.ycut_layer; j++) {
+                    Gx.lyr[j].display = !Gx.lyr[j].display;
+                }
+                delete_layer(this, Gx.ycut_layer);
+
+                // Restore settings
+                Gx.xlabel = Gx.cut_stash.xlabel;
+                Gx.ylabel = Gx.cut_stash.ylabel;
+                Mx.level = Gx.cut_stash.level;
+                Mx.stk = JSON.parse(JSON.stringify(Gx.cut_stash.stk));
+                Gx.panymin = Gx.cut_stash.panymin;
+                Gx.panymax = Gx.cut_stash.panymax;
+                Gx.panxmin = Gx.cut_stash.panxmin;
+                Gx.panxmax = Gx.cut_stash.panxmax;
+                Gx.cut_stash = undefined;
+
+                this.rescale();
+                this.refresh();
+                Gx.ycut_layer = undefined;
+                this.change_settings({
+                    drawmode: Gx.old_drawmode,
+                    autol: Gx.old_autol
+                });
+            }
+        },
+
         _refresh: function() {
             var Mx = this._Mx;
             var Gx = this._Gx;
@@ -3889,16 +3968,6 @@
                 Mx.b = Gx.y_box_w;
                 Mx.t = 0;
             }
-
-            if ((Gx.panymin === undefined) || (Gx.panymax === undefined)) {
-                scale_base(this, {});
-            }
-
-            // Force the plot render area to pixel boundaries
-            Mx.l = Math.floor(Mx.l);
-            Mx.r = Math.ceil(Mx.r);
-            Mx.t = Math.floor(Mx.t);
-            Mx.b = Math.ceil(Mx.b);
 
             // set virtual window size/pos/scaling for current level
             var k = Mx.level;
@@ -4270,6 +4339,7 @@
         this.lyr = [];
         this.HCB = [];
         this.HCB_UUID = {};
+        this.HCB_RDR = {};
         this.plugins = [];
 
         this.plotData = document.createElement("canvas");
@@ -4457,21 +4527,14 @@
         var Gx = plot._Gx;
         var Mx = plot._Mx;
 
-        if (Gx.zmin !== undefined && Gx.zmax !== undefined) { // at least one layer has a z dimension
-            var msg;
-
+        if (Gx.zmin && Gx.zmax) { // at least one layer has a z dimension
+            var msg = "";
             if (Gx.lyr.length === 1) {
-                var z = Gx.lyr[0].get_z(Gx.retx, Gx.rety);
-                if (z !== undefined) {
-                    msg = "Z = " + z.toString();
-                }
+                var msg = "Z = " + Gx.lyr[0].get_z(Gx.retx, Gx.rety).toString();
             } else {
-                msg = null; // TODO we need to think of what we want to display here
+                var msg = "TODO"; // TODO we need to think of what we want to display here
             }
-
-            if (msg) {
-                mx.message(Mx, msg);
-            }
+            mx.message(Mx, msg);
         }
     }
 
@@ -6802,16 +6865,7 @@
                     evt.wpxl = w;
                     evt.hpxl = h;
                     evt.shift = event.shiftKey;
-                    if (mx.dispatchEvent(Mx, evt)) {
-                        var mclkevt = document.createEvent('Event');
-                        mclkevt.initEvent('mclick', true, true);
-                        mclkevt.originalEvent = event;
-                        mclkevt.xpos = evt.xpos;
-                        mclkevt.ypos = evt.ypos;
-                        mclkevt.x = evt.x;
-                        mclkevt.y = evt.y;
-                        mclkevt.which = event.which; // not always available on all browser
-                    }
+                    mx.dispatchEvent(Mx, evt);
                 }
             }
         };
@@ -6999,7 +7053,7 @@
             (cmode === "ABRI") || (cmode === "ABIR") || (cmode === "__RI") ||
             (cmode === "__IR") || (cmode === "IMAG/REAL") || (cmode === "REAL/IMAG")) {
             if (Gx.index) {
-                m.log.error("Imag/Real mode not permitted in INDEX mode");
+                alert("Imag/Real mode not permitted in INDEX mode");
             } else {
                 Gx.cmode = 5;
             }
@@ -7336,23 +7390,11 @@
                 Gx.xdelta = 1.0;
             }
             Mx.origin = 1;
-            if (Gx.autoz & 1) {
-                Gx.zmin = undefined;
-            }
-            if (Gx.autoz & 2) {
-                Gx.zmax = undefined;
-            }
         } else {
             Gx.xstart = 0.0;
             Gx.xdelta = 1.0;
             Gx.autol = -1;
             Mx.origin = 1;
-            if (Gx.autoz & 1) {
-                Gx.zmin = undefined;
-            }
-            if (Gx.autoz & 2) {
-                Gx.zmax = undefined;
-            }
         }
 
         // if (!open) {
@@ -7584,7 +7626,7 @@
         var Mx = plot._Mx;
         var Gx = plot._Gx;
 
-        if ((Gx.zmin === undefined) || (Gx.zmax === undefined) || (Gx.x_cut_data === undefined)) {
+        if ((Gx.zmin === undefined) || (Gx.zmax === undefined)) {
             return;
         }
 
@@ -7634,7 +7676,7 @@
         var Mx = plot._Mx;
         var Gx = plot._Gx;
 
-        if ((Gx.zmin === undefined) || (Gx.zmax === undefined) || (Gx.y_cut_data === undefined)) {
+        if ((Gx.zmin === undefined) || (Gx.zmax === undefined)) {
             return;
         }
 
@@ -7687,41 +7729,12 @@
     }
 
     function draw_layers(plot) {
-        let Gx = plot._Gx;
-        let Mx = plot._Mx;
-
-        var layers = Gx.lyr;
+        var layers = plot._Gx.lyr;
         for (var n = 0; n < layers.length; n++) {
             //if (Gx.sections !== 0) {
             // TODO
             //}
             draw_layer(plot, layers[n]);
-        }
-
-        // if we are allowing auto-scaling on y
-        if ((Gx.autol > 1) && (Gx.panymin !== undefined) && (Gx.panymax !== undefined)) {
-            var fac = 1.0 / (Math.max(Gx.autol, 1));
-
-            // Update the panymin/panymax based on the layers
-            // Iterate over each layer
-            Gx.panymin = undefined;
-            Gx.panymax = undefined;
-            for (var n = 0; n < Gx.lyr.length; n++) {
-                // Ask the layer for it's bounds
-                let lyr_bnds = Gx.lyr[n].get_pan_bounds();
-                // And update the boundaries accordingly
-                set_panbounds(plot, lyr_bnds);
-            }
-
-            Gx.panymin = Gx.panymin * fac + Mx.stk[0].ymin * (1.0 - fac);
-            Gx.panymax = Gx.panymax * fac + Mx.stk[0].ymax * (1.0 - fac);
-
-            if (((Gx.autoy & 1) !== 0)) {
-                Mx.stk[0].ymin = Gx.panymin;
-            }
-            if (((Gx.autoy & 2) !== 0)) {
-                Mx.stk[0].ymax = Gx.panymax;
-            }
         }
     }
 
@@ -7745,10 +7758,7 @@
             return;
         }
 
-        let lyr_bnds = layer.draw();
-        if (lyr_bnds && Gx.autol !== 0) {
-            set_panbounds(plot, lyr_bnds);
-        }
+        layer.draw();
 
         // TODO consider if this is a source of performance
         // issues on streaming plots
@@ -7816,42 +7826,60 @@
         var width = Gx.lyr[0].xframe;
 
         if (Gx.p_cuts) {
-            if (((Mx.xpos >= Mx.l) && (Mx.xpos <= Mx.r) && (Gx.p_cuts_xpos !== Mx.xpos))) {
-                var line = 0;
-                var i = 0;
+            if (!Gx.lyr[0].hcb.pipe) {
+                if (((Mx.xpos >= Mx.l) && (Mx.xpos <= Mx.r) && (Gx.p_cuts_xpos !== Mx.xpos))) {
+                    var line = 0;
+                    var i = 0;
 
-                if (Gx.lyr[0].yCutData) {
-                    Gx.y_cut_data = Gx.lyr[0].yCutData(
-                        pixel_to_real(plot, Mx.xpos, 0).x,
-                        true
-                    );
-
-                    draw_pcut_y(plot);
-                    if (!Gx.lyr[0].hcb.pipe) {
-                        Gx.p_cuts_xpos = Mx.xpos;
+                    //fill data for y_cut for this mouse xpos
+                    Gx.y_cut_data = [];
+                    line = Math.floor((width * (Mx.xpos - Mx.l)) / plot_width);
+                    for (i = line; i < (width * height); i += width) {
+                        Gx.y_cut_data.push(Gx.lyr[0].zbuf[i]);
                     }
+                    draw_pcut_y(plot);
+                    Gx.p_cuts_xpos = Mx.xpos;
                 }
-            }
-            if (((Mx.ypos >= Mx.t) && (Mx.ypos <= Mx.b) && (Gx.p_cuts_ypos !== Mx.ypos))) {
-                var row = 0;
-                var start = 0;
-                var finish = 0;
-                var i = 0;
+                if (((Mx.ypos >= Mx.t) && (Mx.ypos <= Mx.b) && (Gx.p_cuts_ypos !== Mx.ypos))) {
+                    var row = 0;
+                    var start = 0;
+                    var finish = 0;
+                    var i = 0;
 
-                //fill data for x_cut for this mouse ypos
-                if (Gx.lyr[0].xCutData) {
-                    Gx.x_cut_data = Gx.lyr[0].xCutData(
-                        pixel_to_real(plot, 0, Mx.ypos).y,
-                        true
-                    );
+                    //fill data for x_cut for this mouse ypos
+                    row = Math.floor((height * (Mx.ypos - Mx.t)) / plot_height);
+                    start = row * width;
+                    finish = start + width;
+                    Gx.x_cut_data = Gx.lyr[0].zbuf.slice(start, finish);
                     draw_pcut_x(plot);
 
-                    // If we are a static file, store off the position
-                    // so we don't invoke xCutData on refreshes unless
-                    // the mouse moves
-                    if (!Gx.lyr[0].hcb.pipe) {
-                        Gx.p_cuts_ypos = Mx.ypos;
+                    Gx.p_cuts_ypos = Mx.ypos;
+                }
+            } else {
+                if ((Mx.xpos >= Mx.l) && (Mx.xpos <= Mx.r)) {
+                    var line = 0;
+                    var i = 0;
+                    height = Gx.lyr[0].lps;
+                    //fill data for y_cut for this mouse xpos
+                    Gx.y_cut_data = [];
+                    line = Math.floor((width * (Mx.xpos - Mx.l)) / plot_width);
+                    for (i = line; i < (width * height); i += width) {
+                        Gx.y_cut_data.push(Gx.lyr[0].zbuf[i]);
                     }
+                    draw_pcut_y(plot);
+                }
+
+                if ((Mx.ypos >= Mx.t) && (Mx.ypos <= Mx.b)) {
+                    var row = 0;
+                    var start = 0;
+                    var finish = 0;
+                    //fill data for x_cut for this mouse ypos
+                    Gx.x_cut_data = [];
+                    row = Math.floor((height * (Mx.ypos - Mx.t)) / plot_height);
+                    start = row * width;
+                    finish = start + width;
+                    Gx.x_cut_data = Gx.lyr[0].zbuf.slice(start, finish);
+                    draw_pcut_x(plot);
                 }
             }
         }
@@ -7984,7 +8012,7 @@
         if (newmode === Gx.cmode) {
             return;
         } else if (newmode === 5 && Gx.index) {
-            m.log.error("Imag/Real mode not permitted in INDEX mode");
+            alert("Imag/Real mode not permitted in INDEX mode");
         } else if (Gx.lyr.length <= 0) {
             Gx.cmode = newmode;
             // The call to display specs isn't found in sigplot.for;
@@ -8726,54 +8754,29 @@
     }
 
     /**
-     * Determine the effective bounds of the plottable area, which is defined
-     * via the pan-boundaries (panxmin/panxmax/panymin/panymax).  Then check
-     * the stack (i.e. the viewable area) and update accordingly.
-     *  
      * @memberOf sigplot
      * @private
-     * 
-     * @param plot
-     *         the plot to scale
-     * @param mode
-     *         various mode options (deprecated)
-     * @param xxmin
-     *         the xmin to begin scaling at
-     * @param xxmax
-     *         the xmax to end scaling at
-     * @param xlab
-     *         force a specific x-label
-     * @param ylab
-     *         force a specific y-label
      */
     function scale_base(plot, mode, xxmin, xxmax, xlab, ylab) {
-        const Mx = plot._Mx;
-        const Gx = plot._Gx;
+        var Mx = plot._Mx;
+        var Gx = plot._Gx;
 
-        // Reset pan boundaries
-        Gx.panxmin = undefined;
-        Gx.panxmax = undefined;
-        Gx.panymin = undefined;
-        Gx.panymax = undefined;
+        var load = (mode.get_data === true);
 
-        // Determine if we have been requested to only scale a subset of the xrange
-        // TODO - this is kinda holdover from 1D only mode and should be reconsidered
-        // given that SigPlot can do both 1D and 2D
-        let xmin = xxmin;
-        let xmax = xxmax;
-        const noxmin = (xmin === undefined);
-        const noxmax = (xmax === undefined);
-
+        Gx.panxmin = 1.0;
+        Gx.panxmax = -1.0;
+        Gx.panymin = 1.0;
+        Gx.panymax = -1.0;
+        var xmin = xxmin;
+        var xmax = xxmax;
+        var noxmin = (xmin === undefined);
+        var noxmax = (xmax === undefined);
         if (Gx.lyr.length === 0) {
-            // If there are no layers we simply show -1 to 1 on each axis
             Gx.panxmin = -1.0;
             Gx.panxmax = 1.0;
             Gx.panymin = -1.0;
             Gx.panymax = 1.0;
         } else {
-            // If there is at least on layer
-
-            // If specific xlabel/ylabel wasn't provided use the first layer
             if (xlab === undefined) {
                 Gx.xlab = Gx.lyr[0].xlab;
             }
@@ -8781,26 +8784,22 @@
                 Gx.ylab = Gx.lyr[0].ylab;
             }
 
-            // Iterate over each layer
             for (var n = 0; n < Gx.lyr.length; n++) {
-                // If a layer isn't displayed it's not considered as part of rescaling
                 if (Gx.lyr[n].display === false) {
                     continue;
                 }
-                // If xmin wasn't provided as an argument, grab the layers
                 if (noxmin) {
                     xmin = Gx.lyr[n].xmin;
                 } else {
                     xmin = xxmin;
                 }
-                // If xmax wasn't provided as an argument, grab the layers
+
                 if (noxmax) {
                     xmax = Gx.lyr[n].xmax;
                 } else {
                     xmax = xxmax;
                 }
 
-                // If the labels between layers aren't consistent, use None instead
                 if (Gx.xlab !== Gx.lyr[n].xlab) {
                     Gx.xlab = 0; // If the layers aren't consistent use None
                 }
@@ -8808,11 +8807,42 @@
                     Gx.ylab = 0; // If the layers aren't consistent use None
                 }
 
-                // Ask the layer for it's bounds
-                let lyr_bnds = Gx.lyr[n].get_pan_bounds();
-                // And update the boundaries accordingly
-                set_panbounds(plot, lyr_bnds);
-            } // end per-layer iteration
+                if (load) {
+                    Gx.lyr[n].get_data(xmin, xmax);
+                }
+
+                if (Gx.autox > 0 || Gx.autoy > 0) {
+                    while (xmin < xmax) {
+                        // get_data fills in the layer xbuf/ybuf with data
+                        Gx.lyr[n].get_data(xmin, xmax);
+
+                        // have the layer prep it's data to be rendered
+                        var npts = Gx.lyr[n].prep(xmin, xmax);
+
+                        // If both All and Expand are provided we
+                        // need to look at the entire file to auto-scale it
+                        if (Gx.all && Gx.expand) {
+                            if (Gx.lyr[n].size === 0) {
+                                xmin = xmax;
+                            } else {
+                                if (Gx.index) {
+                                    xmin = xmin + npts;
+                                } else {
+                                    if (Gx.lyr[n].xdelta >= 0) {
+                                        xmin = xmin + (Gx.lyr[n].size * Gx.lyr[n].xdelta);
+                                    } else {
+                                        xmax = xmax + (Gx.lyr[n].size * Gx.lyr[n].xdelta);
+                                    }
+                                }
+                            }
+                        } else {
+                            xmin = xmax;
+                        }
+                    }
+                } else {
+                    Gx.lyr[n].prep(1.0, -1.0);
+                }
+            }
         }
 
         var xran = Gx.panxmax - Gx.panxmin;
@@ -8833,17 +8863,10 @@
         if (((Gx.autox & 1) !== 0) && noxmin) {
             Mx.stk[0].xmin = Gx.panxmin;
         }
-        // If autox is set to allow auto-xmax _and_ xmax was not provided by scale_base
         if (((Gx.autox & 2) !== 0) && noxmax) {
-            // the top-level stack xmax becomes the panxmax
             Mx.stk[0].xmax = Gx.panxmax;
-            // unless 'All' mode is set or 'xdata' mode is used
-            // we emulate XPLOT by only showing the first 32768 points
             if (!(Gx.all || Gx.xdata)) {
                 for (var n = 0; n < Gx.lyr.length; n++) {
-                    if (Gx.lyr[n].display === false) {
-                        continue;
-                    }
                     xmax = Math.min(Gx.lyr[n].xmax, Mx.stk[0].xmax);
                     var dpts = Math.abs((xmax - Gx.lyr[n].xmin) / Gx.lyr[n].xdelta) - Gx.bufmax + 1.0;
                     if (dpts > 0) {
@@ -8855,70 +8878,15 @@
 
         if (((Gx.autoy & 1) !== 0)) {
             Mx.stk[0].ymin = Gx.panymin;
-            for (var i = 0; i < Mx.stk.length; i++) {
-                if (Mx.stk[i].ymin === undefined) {
-                    Mx.stk[i].ymin = Gx.panymin;
-                }
-            }
         }
         if (((Gx.autoy & 2) !== 0)) {
             Mx.stk[0].ymax = Gx.panymax;
-            for (var j = 0; j < Mx.stk.length; j++) {
-                if (Mx.stk[j].ymax === undefined) {
-                    Mx.stk[j].ymax = Gx.panymax;
-                }
-            }
         }
 
-        if ((Gx.panymin !== undefined) && (Gx.panymax !== undefined)) {
-            var yran = (Gx.panymax - Gx.panymin);
-            Gx.panymin -= m.pad(yran, Gx.panypad);
-            Gx.panymax += m.pad(yran, Gx.panypad);
-        }
+        var yran = (Gx.panymax - Gx.panymin);
+        Gx.panymin -= m.pad(yran, Gx.panypad);
+        Gx.panymax += m.pad(yran, Gx.panypad);
 
-    }
-
-    /**
-     * @memberOf sigplot
-     * @private
-     */
-    function set_panbounds(plot, {
-        xmin,
-        xmax,
-        ymin,
-        ymax
-    }) {
-        var Gx = plot._Gx;
-        var Mx = plot._Mx;
-
-        if (xmin !== undefined) {
-            if (Gx.panxmin === undefined) {
-                Gx.panxmin = xmin;
-            } else {
-                Gx.panxmin = Math.min(Gx.panxmin, xmin);
-            }
-        }
-        if (xmax !== undefined) {
-            if (Gx.panxmax === undefined) {
-                Gx.panxmax = xmax;
-            } else {
-                Gx.panxmax = Math.max(Gx.panxmax, xmax);
-            }
-        }
-        if (ymin !== undefined) {
-            if (Gx.panymin === undefined) {
-                Gx.panymin = ymin;
-            } else {
-                Gx.panymin = Math.min(Gx.panymin, ymin);
-            }
-        }
-        if (ymax !== undefined) {
-            if (Gx.panymax === undefined) {
-                Gx.panymax = ymax;
-            } else {
-                Gx.panymax = Math.max(Gx.panymax, ymax);
-            }
-        }
     }
 
     /**
@@ -9240,13 +9208,6 @@
     }
 
     sigplot.Plot = Plot;
-    sigplot.plugins = {
-        AccordionPlugin,
-        AnnotationPlugin,
-        BoxesPlugin,
-        PlaybackControlsPlugin,
-        SliderPlugin,
-    };
     module.exports = sigplot;
 
 }());
